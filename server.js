@@ -17,6 +17,14 @@ let connectionStatus = "Disconnected";
 let lastTickTime = null;
 let ws = null;
 
+// Account settings
+let userApiToken = "";
+let accountInfo = null;
+let isAccountConnected = false;
+
+// Middleware
+app.use(express.json());
+
 // Utility functions
 function mockTradeAction() {
     const tradeTime = new Date().toLocaleTimeString();
@@ -35,7 +43,7 @@ function mockTradeAction() {
 
 function detectPattern(digits) {
     if (digits.length < 3) {
-        return { digit: null, reason: "Insufficient data for pattern analysis" };
+        return { digit: null, reason: "Insufficient data for pattern analysis", confidence: 0 };
     }
 
     const sequence = [...digits];
@@ -44,11 +52,11 @@ function detectPattern(digits) {
     for (let i = 0; i < sequence.length - 2; i++) {
         if (sequence[i] + 1 === sequence[i+1] && sequence[i+1] + 1 === sequence[i+2]) {
             const nextDigit = sequence[i+2] < 9 ? sequence[i+2] + 1 : sequence[i+2] - 1;
-            return { digit: nextDigit, reason: "Ascending sequence detected" };
+            return { digit: nextDigit, reason: "Ascending sequence detected", confidence: 85 };
         }
         if (sequence[i] - 1 === sequence[i+1] && sequence[i+1] - 1 === sequence[i+2]) {
             const nextDigit = sequence[i+2] > 0 ? sequence[i+2] - 1 : sequence[i+2] + 1;
-            return { digit: nextDigit, reason: "Descending sequence detected" };
+            return { digit: nextDigit, reason: "Descending sequence detected", confidence: 85 };
         }
     }
     
@@ -56,14 +64,14 @@ function detectPattern(digits) {
     const lastThree = sequence.slice(-3);
     if (new Set(lastThree).size === 1) {
         const digit = lastThree[0] <= 4 ? 9 - lastThree[0] : lastThree[0] - 5;
-        return { digit, reason: "Breaking repeating pattern" };
+        return { digit, reason: "Breaking repeating pattern", confidence: 75 };
     }
 
     // Check for alternating patterns
     if (sequence.length >= 4) {
         const len = sequence.length;
         if (sequence[len-4] === sequence[len-2] && sequence[len-3] === sequence[len-1]) {
-            return { digit: sequence[len-4], reason: "Alternating pattern detected" };
+            return { digit: sequence[len-4], reason: "Alternating pattern detected", confidence: 70 };
         }
     }
 
@@ -72,9 +80,9 @@ function detectPattern(digits) {
     const highCount = lastFive.filter(d => d > 4).length;
     
     if (highCount >= 4) {
-        return { digit: Math.min(...sequence), reason: "Strong high trend - expecting reversal" };
+        return { digit: Math.min(...sequence), reason: "Strong high trend - expecting reversal", confidence: 65 };
     } else if (highCount <= 1) {
-        return { digit: Math.max(...sequence), reason: "Strong low trend - expecting reversal" };
+        return { digit: Math.max(...sequence), reason: "Strong low trend - expecting reversal", confidence: 65 };
     }
 
     // Fibonacci-like sequence detection
@@ -82,7 +90,7 @@ function detectPattern(digits) {
         for (let i = 0; i < sequence.length - 2; i++) {
             if (sequence[i] + sequence[i+1] === sequence[i+2]) {
                 const nextFib = (sequence[i+1] + sequence[i+2]) % 10;
-                return { digit: nextFib, reason: "Fibonacci-like sequence detected" };
+                return { digit: nextFib, reason: "Fibonacci-like sequence detected", confidence: 60 };
             }
         }
     }
@@ -93,16 +101,18 @@ function detectPattern(digits) {
     const sorted = Object.entries(counter).sort((a, b) => b[1] - a[1]);
     
     if (sorted.length > 1 && sorted[0][1] > sorted[1][1]) {
+        const confidence = Math.min(90, (sorted[0][1] / digits.length) * 100);
         return { 
             digit: parseInt(sorted[0][0]), 
-            reason: `Most frequent digit (confidence: ${sorted[0][1]}/${digits.length})` 
+            reason: `Most frequent digit (${sorted[0][1]}/${digits.length} occurrences)`,
+            confidence: Math.round(confidence)
         };
     }
     
     // Weighted recent bias
     const recentWeight = sequence.slice(-3).reduce((sum, d, i) => sum + d * (i + 1), 0);
     const predicted = Math.floor(recentWeight / 6) % 10;
-    return { digit: predicted, reason: "Weighted recent trend analysis" };
+    return { digit: predicted, reason: "Weighted recent trend analysis", confidence: 45 };
 }
 
 // Enhanced HTML template
@@ -218,6 +228,87 @@ const HTML_PAGE = `
         .card:hover {
             transform: translateY(-5px);
             box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+        
+        .account-card {
+            background: linear-gradient(135deg, #e8f5e8, #f0fff0);
+            border: 1px solid #28a745;
+        }
+        
+        .account-card.disconnected {
+            background: linear-gradient(135deg, #fff5f5, #ffe8e8);
+            border: 1px solid #dc3545;
+        }
+        
+        .api-input-group {
+            display: flex;
+            gap: 1rem;
+            align-items: end;
+            margin-bottom: 1rem;
+        }
+        
+        .api-input-group input {
+            flex: 1;
+            padding: 1rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 1rem;
+            background: white;
+            transition: border-color 0.3s ease;
+        }
+        
+        .api-input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .api-button {
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .api-button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .api-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .account-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .account-stat {
+            background: rgba(255, 255, 255, 0.7);
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .account-stat h4 {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .account-stat .value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #333;
         }
         
         .controls-card {
@@ -461,6 +552,29 @@ const HTML_PAGE = `
             color: #533f03;
         }
         
+        .confidence-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+        
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #ffc107, #28a745);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .confidence-text {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 0.25rem;
+            text-align: center;
+        }
+        
         .trade-history {
             max-height: 300px;
             overflow-y: auto;
@@ -520,6 +634,15 @@ const HTML_PAGE = `
             gap: 0.5rem;
         }
         
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            border: 1px solid #f5c6cb;
+        }
+        
         @media (max-width: 768px) {
             .container {
                 padding: 0 1rem;
@@ -547,6 +670,15 @@ const HTML_PAGE = `
                 width: 50px;
                 height: 50px;
                 font-size: 1.2rem;
+            }
+            
+            .api-input-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .account-info {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -579,8 +711,17 @@ const HTML_PAGE = `
                 signalElement.innerText = data.signal;
                 signalElement.className = 'value ' + getSignalClass(data.signal);
                 
-                // Update prediction
+                // Update prediction with confidence
                 document.getElementById('predicted').innerText = data.predicted;
+                const confidenceBar = document.getElementById('confidence-fill');
+                const confidenceText = document.getElementById('confidence-text');
+                if (data.confidence !== undefined) {
+                    confidenceBar.style.width = data.confidence + '%';
+                    confidenceText.innerText = \`Confidence: \${data.confidence}%\`;
+                }
+                
+                // Update account info
+                updateAccountInfo(data.account_info, data.is_account_connected);
                 
                 // Update digits with enhanced circular design
                 const digitsList = document.getElementById('last_digits');
@@ -615,9 +756,39 @@ const HTML_PAGE = `
             }
         }
         
+        function updateAccountInfo(accountInfo, isConnected) {
+            const accountCard = document.getElementById('account-card');
+            const accountInfoDiv = document.getElementById('account-info');
+            
+            if (isConnected && accountInfo) {
+                accountCard.className = 'card account-card';
+                accountInfoDiv.innerHTML = \`
+                    <div class="account-stat">
+                        <h4>Account ID</h4>
+                        <div class="value">\${accountInfo.loginid || 'N/A'}</div>
+                    </div>
+                    <div class="account-stat">
+                        <h4>Balance</h4>
+                        <div class="value">\${accountInfo.balance || '0'} \${accountInfo.currency || 'USD'}</div>
+                    </div>
+                    <div class="account-stat">
+                        <h4>Country</h4>
+                        <div class="value">\${accountInfo.country || 'N/A'}</div>
+                    </div>
+                    <div class="account-stat">
+                        <h4>Email</h4>
+                        <div class="value">\${accountInfo.email || 'N/A'}</div>
+                    </div>
+                \`;
+            } else {
+                accountCard.className = 'card account-card disconnected';
+                accountInfoDiv.innerHTML = '<div style="text-align: center; color: #666;">Enter your API token to view account details</div>';
+            }
+        }
+        
         function getSignalClass(signal) {
-            if (signal.includes('Good')) return 'signal-good';
-            if (signal.includes('Wait')) return 'signal-wait';
+            if (signal.includes('Good') || signal.includes('Strong')) return 'signal-good';
+            if (signal.includes('Wait') || signal.includes('Weak')) return 'signal-wait';
             return 'signal-collecting';
         }
         
@@ -657,6 +828,52 @@ const HTML_PAGE = `
             await fetch(\`/toggle_trade?state=\${checkbox.checked ? 'on' : 'off'}\`);
         }
         
+        async function connectAccount() {
+            const apiToken = document.getElementById('api-token').value.trim();
+            const button = document.getElementById('connect-btn');
+            const errorDiv = document.getElementById('api-error');
+            
+            if (!apiToken) {
+                showError('Please enter your API token');
+                return;
+            }
+            
+            button.disabled = true;
+            button.innerText = 'Connecting...';
+            errorDiv.style.display = 'none';
+            
+            try {
+                const response = await fetch('/connect_account', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ api_token: apiToken })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    button.innerText = 'Connected ✓';
+                    button.style.background = '#28a745';
+                } else {
+                    showError(result.error || 'Failed to connect account');
+                    button.disabled = false;
+                    button.innerText = 'Connect Account';
+                }
+            } catch (error) {
+                showError('Connection failed: ' + error.message);
+                button.disabled = false;
+                button.innerText = 'Connect Account';
+            }
+        }
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('api-error');
+            errorDiv.innerText = message;
+            errorDiv.style.display = 'block';
+        }
+        
         // Check for connection timeout
         setInterval(() => {
             if (Date.now() - lastUpdateTime > 10000) { // 10 seconds timeout
@@ -681,6 +898,18 @@ const HTML_PAGE = `
     </div>
     
     <div class="container">
+        <div class="card account-card disconnected" id="account-card">
+            <h2 class="section-title">👤 Account Integration</h2>
+            <div class="api-input-group">
+                <input type="password" id="api-token" placeholder="Enter your Deriv API token..." />
+                <button class="api-button" id="connect-btn" onclick="connectAccount()">Connect Account</button>
+            </div>
+            <div id="api-error" class="error-message" style="display: none;"></div>
+            <div class="account-info" id="account-info">
+                <div style="text-align: center; color: #666;">Enter your API token to view account details</div>
+            </div>
+        </div>
+        
         <div class="card controls-card">
             <div class="control-group">
                 <label>Market Selection</label>
@@ -743,6 +972,10 @@ const HTML_PAGE = `
             <div class="prediction-card">
                 <h4>🔮 Pattern Analysis</h4>
                 <div class="prediction-value" id="predicted">-</div>
+                <div class="confidence-bar">
+                    <div class="confidence-fill" id="confidence-fill" style="width: 0%"></div>
+                </div>
+                <div class="confidence-text" id="confidence-text">Confidence: 0%</div>
             </div>
         </div>
         
@@ -778,11 +1011,13 @@ app.get('/check', (req, res) => {
     // Enhanced signal logic
     let signal;
     let predicted = "Analyzing patterns...";
+    let confidence = 0;
     
     if (lastDigits.length < watchCount) {
         signal = "🔄 Collecting Data...";
     } else {
         const pattern = detectPattern(lastDigits);
+        confidence = pattern.confidence || 0;
         
         // Multi-factor signal analysis
         let signalStrength = 0;
@@ -797,9 +1032,11 @@ app.get('/check', (req, res) => {
         }
             
         // Factor 2: Pattern confidence
-        if (pattern.reason && (pattern.reason.includes("sequence") || pattern.reason.includes("pattern"))) {
+        if (pattern.confidence >= 80) {
+            signalStrength += 3;
+        } else if (pattern.confidence >= 60) {
             signalStrength += 2;
-        } else if (pattern.reason && pattern.reason.includes("frequent")) {
+        } else if (pattern.confidence >= 40) {
             signalStrength += 1;
         }
             
@@ -810,9 +1047,9 @@ app.get('/check', (req, res) => {
         }
             
         // Determine signal based on strength
-        if (signalStrength >= 5) {
+        if (signalStrength >= 6) {
             signal = "🚀 Strong Entry Signal";
-        } else if (signalStrength >= 3) {
+        } else if (signalStrength >= 4) {
             signal = "✅ Good to Enter";
         } else if (signalStrength >= 2) {
             signal = "⚠️ Weak Signal";
@@ -831,9 +1068,82 @@ app.get('/check', (req, res) => {
         signal: signal,
         digit_counts: digitCounts,
         predicted: predicted,
+        confidence: confidence,
         trade_history: tradeHistory,
-        connection_status: connectionStatus
+        connection_status: connectionStatus,
+        account_info: accountInfo,
+        is_account_connected: isAccountConnected
     });
+});
+
+app.post('/connect_account', async (req, res) => {
+    const { api_token } = req.body;
+    
+    if (!api_token) {
+        return res.json({ success: false, error: 'API token is required' });
+    }
+    
+    try {
+        // Create a new WebSocket connection for account info
+        const accountWs = new WebSocket(derivWsUrl);
+        
+        accountWs.on('open', () => {
+            // Authorize with the API token
+            accountWs.send(JSON.stringify({
+                authorize: api_token
+            }));
+        });
+        
+        accountWs.on('message', (data) => {
+            try {
+                const response = JSON.parse(data.toString());
+                
+                if (response.authorize) {
+                    // Successfully authorized, get account info
+                    userApiToken = api_token;
+                    accountInfo = {
+                        loginid: response.authorize.loginid,
+                        balance: response.authorize.balance,
+                        currency: response.authorize.currency,
+                        country: response.authorize.country,
+                        email: response.authorize.email
+                    };
+                    isAccountConnected = true;
+                    
+                    console.log(`✅ Account connected: ${accountInfo.loginid}`);
+                    accountWs.close();
+                    
+                    res.json({ success: true, account_info: accountInfo });
+                } else if (response.error) {
+                    console.log(`❌ Account connection failed: ${response.error.message}`);
+                    accountWs.close();
+                    
+                    res.json({ success: false, error: response.error.message });
+                }
+            } catch (error) {
+                console.error('Error parsing account response:', error);
+                accountWs.close();
+                res.json({ success: false, error: 'Failed to parse account response' });
+            }
+        });
+        
+        accountWs.on('error', (error) => {
+            console.error('Account WebSocket error:', error);
+            res.json({ success: false, error: 'Connection failed' });
+        });
+        
+        // Timeout after 10 seconds
+        setTimeout(() => {
+            if (accountWs.readyState === WebSocket.OPEN) {
+                accountWs.close();
+                res.json({ success: false, error: 'Connection timeout' });
+            }
+        }, 10000);
+        
+    } catch (error) {
+        console.error('Account connection error:', error);
+        res.json({ success: false, error: 'Failed to connect to account' });
+    }
 });
 
 app.get('/change_market', (req, res) => {
@@ -899,11 +1209,10 @@ function connectToDerivWS() {
                             shouldTrade = true;
                         }
                         
-                        // Condition 2: Pattern-based entry
+                        // Condition 2: Pattern-based entry with confidence
                         const pattern = detectPattern(lastDigits);
                         if (overCount >= overThreshold - 1 && 
-                            pattern.reason && 
-                            (pattern.reason.includes("sequence") || pattern.reason.includes("pattern"))) {
+                            pattern.confidence >= 70) {
                             shouldTrade = true;
                         }
                         
