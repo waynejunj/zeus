@@ -1,41 +1,112 @@
-import json
-import asyncio
-import websockets
-from collections import deque, Counter
-from flask import Flask, render_template_string, request, jsonify
-import threading
-import time
-from datetime import datetime
+const express = require('express');
+const WebSocket = require('ws');
+const path = require('path');
 
-app = Flask(__name__)
+const app = express();
+const PORT = 5001;
 
-# Settings
-watch_count = 10
-over_threshold = 6
-last_digits = deque(maxlen=watch_count)
-trade_enabled = False
-market_symbol = "R_10"
-deriv_ws_url = "wss://ws.binaryws.com/websockets/v3?app_id=1089"
-trade_history = []
-connection_status = "Disconnected"
-last_tick_time = None
+// Settings
+let watchCount = 10;
+let overThreshold = 6;
+let lastDigits = [];
+let tradeEnabled = false;
+let marketSymbol = "R_10";
+const derivWsUrl = "wss://ws.binaryws.com/websockets/v3?app_id=1089";
+let tradeHistory = [];
+let connectionStatus = "Disconnected";
+let lastTickTime = null;
+let ws = null;
 
-def mock_trade_action():
-    global trade_history
-    trade_time = datetime.now().strftime("%H:%M:%S")
-    trade_data = {
-        "time": trade_time,
-        "action": "CALL",
-        "reason": "Over 4 threshold reached",
-        "digits": list(last_digits)[-5:]  # Last 5 digits
+// Utility functions
+function mockTradeAction() {
+    const tradeTime = new Date().toLocaleTimeString();
+    const tradeData = {
+        time: tradeTime,
+        action: "CALL",
+        reason: "Over 4 threshold reached",
+        digits: lastDigits.slice(-5) // Last 5 digits
+    };
+    tradeHistory.push(tradeData);
+    if (tradeHistory.length > 10) { // Keep only last 10 trades
+        tradeHistory.shift();
     }
-    trade_history.append(trade_data)
-    if len(trade_history) > 10:  # Keep only last 10 trades
-        trade_history.pop(0)
-    print(f"🔁 Mock Trade Executed at {trade_time}: CALL on Over 4")
+    console.log(`🔁 Mock Trade Executed at ${tradeTime}: CALL on Over 4`);
+}
 
-# Enhanced UI Template with modern design
-HTML_PAGE = '''
+function detectPattern(digits) {
+    if (digits.length < 3) {
+        return { digit: null, reason: "Insufficient data for pattern analysis" };
+    }
+
+    const sequence = [...digits];
+    
+    // Check for consecutive sequences
+    for (let i = 0; i < sequence.length - 2; i++) {
+        if (sequence[i] + 1 === sequence[i+1] && sequence[i+1] + 1 === sequence[i+2]) {
+            const nextDigit = sequence[i+2] < 9 ? sequence[i+2] + 1 : sequence[i+2] - 1;
+            return { digit: nextDigit, reason: "Ascending sequence detected" };
+        }
+        if (sequence[i] - 1 === sequence[i+1] && sequence[i+1] - 1 === sequence[i+2]) {
+            const nextDigit = sequence[i+2] > 0 ? sequence[i+2] - 1 : sequence[i+2] + 1;
+            return { digit: nextDigit, reason: "Descending sequence detected" };
+        }
+    }
+    
+    // Check for repeating digits
+    const lastThree = sequence.slice(-3);
+    if (new Set(lastThree).size === 1) {
+        const digit = lastThree[0] <= 4 ? 9 - lastThree[0] : lastThree[0] - 5;
+        return { digit, reason: "Breaking repeating pattern" };
+    }
+
+    // Check for alternating patterns
+    if (sequence.length >= 4) {
+        const len = sequence.length;
+        if (sequence[len-4] === sequence[len-2] && sequence[len-3] === sequence[len-1]) {
+            return { digit: sequence[len-4], reason: "Alternating pattern detected" };
+        }
+    }
+
+    // High/low trend analysis
+    const lastFive = sequence.slice(-5);
+    const highCount = lastFive.filter(d => d > 4).length;
+    
+    if (highCount >= 4) {
+        return { digit: Math.min(...sequence), reason: "Strong high trend - expecting reversal" };
+    } else if (highCount <= 1) {
+        return { digit: Math.max(...sequence), reason: "Strong low trend - expecting reversal" };
+    }
+
+    // Fibonacci-like sequence detection
+    if (sequence.length >= 3) {
+        for (let i = 0; i < sequence.length - 2; i++) {
+            if (sequence[i] + sequence[i+1] === sequence[i+2]) {
+                const nextFib = (sequence[i+1] + sequence[i+2]) % 10;
+                return { digit: nextFib, reason: "Fibonacci-like sequence detected" };
+            }
+        }
+    }
+
+    // Most frequent digit
+    const counter = {};
+    digits.forEach(d => counter[d] = (counter[d] || 0) + 1);
+    const sorted = Object.entries(counter).sort((a, b) => b[1] - a[1]);
+    
+    if (sorted.length > 1 && sorted[0][1] > sorted[1][1]) {
+        return { 
+            digit: parseInt(sorted[0][0]), 
+            reason: `Most frequent digit (confidence: ${sorted[0][1]}/${digits.length})` 
+        };
+    }
+    
+    // Weighted recent bias
+    const recentWeight = sequence.slice(-3).reduce((sum, d, i) => sum + d * (i + 1), 0);
+    const predicted = Math.floor(recentWeight / 6) % 10;
+    return { digit: predicted, reason: "Weighted recent trend analysis" };
+}
+
+// Enhanced HTML template
+const HTML_PAGE = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -489,7 +560,6 @@ HTML_PAGE = '''
                 
                 // Update connection status
                 const statusElement = document.getElementById('connection-status');
-                const statusDot = document.getElementById('status-dot');
                 if (data.connection_status === 'Connected') {
                     statusElement.className = 'connection-status connected';
                     statusElement.innerHTML = '<div class="status-dot connected" id="status-dot"></div>Connected';
@@ -517,9 +587,9 @@ HTML_PAGE = '''
                 digitsList.innerHTML = '';
                 data.last_digits.forEach((d, index) => {
                     const div = document.createElement('div');
-                    div.className = `digit-circle ${d > 4 ? 'digit-over' : 'digit-under'}`;
+                    div.className = \`digit-circle \${d > 4 ? 'digit-over' : 'digit-under'}\`;
                     div.innerText = d;
-                    div.style.animationDelay = `${index * 0.1}s`;
+                    div.style.animationDelay = \`\${index * 0.1}s\`;
                     digitsList.appendChild(div);
                 });
                 
@@ -560,19 +630,19 @@ HTML_PAGE = '''
                 return;
             }
             
-            trades.reverse().forEach(trade => {
+            trades.slice().reverse().forEach(trade => {
                 const tradeItem = document.createElement('div');
                 tradeItem.className = 'trade-item';
                 
                 const digitsHtml = trade.digits.map(d => 
-                    `<div class="trade-digit ${d > 4 ? 'digit-over' : 'digit-under'}">${d}</div>`
+                    \`<div class="trade-digit \${d > 4 ? 'digit-over' : 'digit-under'}">\${d}</div>\`
                 ).join('');
                 
-                tradeItem.innerHTML = `
-                    <div class="trade-time">${trade.time}</div>
-                    <div class="trade-action">${trade.action}</div>
-                    <div class="trade-digits">${digitsHtml}</div>
-                `;
+                tradeItem.innerHTML = \`
+                    <div class="trade-time">\${trade.time}</div>
+                    <div class="trade-action">\${trade.action}</div>
+                    <div class="trade-digits">\${digitsHtml}</div>
+                \`;
                 
                 historyContainer.appendChild(tradeItem);
             });
@@ -580,11 +650,11 @@ HTML_PAGE = '''
         
         function changeMarket() {
             const symbol = document.getElementById('market').value;
-            fetch(`/change_market?symbol=${symbol}`);
+            fetch(\`/change_market?symbol=\${symbol}\`);
         }
         
         async function toggleTrade(checkbox) {
-            await fetch(`/toggle_trade?state=${checkbox.checked ? 'on' : 'off'}`);
+            await fetch(\`/toggle_trade?state=\${checkbox.checked ? 'on' : 'off'}\`);
         }
         
         // Check for connection timeout
@@ -692,207 +762,187 @@ HTML_PAGE = '''
     </div>
 </body>
 </html>
-'''
+`;
 
-@app.route('/')
-def index():
-    return render_template_string(HTML_PAGE)
+// Express routes
+app.get('/', (req, res) => {
+    res.send(HTML_PAGE);
+});
 
-def detect_pattern(digits):
-    """Enhanced pattern analysis with more sophisticated algorithms."""
-    if len(digits) < 3:
-        return None, "Insufficient data for pattern analysis"
-
-    sequence = list(digits)
+app.get('/check', (req, res) => {
+    const overCount = lastDigits.filter(d => d > 4).length;
+    const totalDigits = lastDigits.length;
+    const overPercentage = totalDigits > 0 ? Math.round((overCount / totalDigits) * 100 * 10) / 10 : 0;
+    const digitCounts = Array.from({length: 10}, (_, i) => lastDigits.filter(d => d === i).length);
     
-    # Check for consecutive sequences (e.g., 1,2,3 or 7,6,5)
-    for i in range(len(sequence) - 2):
-        if sequence[i] + 1 == sequence[i+1] == sequence[i+2] - 1:
-            return sequence[i+2] + 1 if sequence[i+2] < 9 else sequence[i+2] - 1, "Ascending sequence detected"
-        if sequence[i] - 1 == sequence[i+1] == sequence[i+2] + 1:
-            return sequence[i+2] - 1 if sequence[i+2] > 0 else sequence[i+2] + 1, "Descending sequence detected"
+    // Enhanced signal logic
+    let signal;
+    let predicted = "Analyzing patterns...";
     
-    # Check for repeating digits (e.g., 5,5,5)
-    last_three = sequence[-3:]
-    if len(set(last_three)) == 1:
-        # Predict opposite tendency
-        return 9 - last_three[0] if last_three[0] <= 4 else last_three[0] - 5, "Breaking repeating pattern"
-
-    # Check for alternating patterns (e.g., 1,8,1,8)
-    if len(sequence) >= 4:
-        if sequence[-4] == sequence[-2] and sequence[-3] == sequence[-1]:
-            return sequence[-4], "Alternating pattern detected"
-
-    # Check for high/low trend analysis
-    last_five = sequence[-5:] if len(sequence) >= 5 else sequence
-    high_count = sum(1 for d in last_five if d > 4)
-    
-    if high_count >= 4:
-        return min(sequence), "Strong high trend - expecting reversal"
-    elif high_count <= 1:
-        return max(sequence), "Strong low trend - expecting reversal"
-
-    # Fibonacci-like sequence detection
-    if len(sequence) >= 3:
-        for i in range(len(sequence) - 2):
-            if sequence[i] + sequence[i+1] == sequence[i+2]:
-                next_fib = sequence[i+1] + sequence[i+2]
-                return next_fib % 10, "Fibonacci-like sequence detected"
-
-    # Most frequent digit with confidence scoring
-    counter = Counter(digits)
-    most_common = counter.most_common(2)
-    if most_common and len(most_common) > 1:
-        if most_common[0][1] > most_common[1][1]:
-            return most_common[0][0], f"Most frequent digit (confidence: {most_common[0][1]}/{len(digits)})"
-    
-    # Weighted recent bias
-    recent_weight = sum(d * (i + 1) for i, d in enumerate(sequence[-3:]))
-    predicted = int(recent_weight / 6) % 10
-    return predicted, "Weighted recent trend analysis"
-
-@app.route('/check')
-def check():
-    global connection_status, last_tick_time
-    
-    over_count = sum(1 for d in last_digits if d > 4)
-    total_digits = len(last_digits)
-    over_percentage = round((over_count / total_digits * 100), 1) if total_digits > 0 else 0
-    digit_counts = [last_digits.count(i) for i in range(10)]
-    
-    # Enhanced signal logic
-    if len(last_digits) < watch_count:
-        signal = "🔄 Collecting Data..."
-    else:
-        predicted_digit, pattern_reason = detect_pattern(last_digits)
+    if (lastDigits.length < watchCount) {
+        signal = "🔄 Collecting Data...";
+    } else {
+        const pattern = detectPattern(lastDigits);
         
-        # Multi-factor signal analysis
-        signal_strength = 0
+        // Multi-factor signal analysis
+        let signalStrength = 0;
         
-        # Factor 1: Over threshold
-        if over_count >= over_threshold:
-            signal_strength += 3
-        elif over_count >= over_threshold - 1:
-            signal_strength += 2
-        elif over_count >= over_threshold - 2:
-            signal_strength += 1
+        // Factor 1: Over threshold
+        if (overCount >= overThreshold) {
+            signalStrength += 3;
+        } else if (overCount >= overThreshold - 1) {
+            signalStrength += 2;
+        } else if (overCount >= overThreshold - 2) {
+            signalStrength += 1;
+        }
             
-        # Factor 2: Pattern confidence
-        if pattern_reason and ("sequence" in pattern_reason or "pattern" in pattern_reason):
-            signal_strength += 2
-        elif pattern_reason and "frequent" in pattern_reason:
-            signal_strength += 1
+        // Factor 2: Pattern confidence
+        if (pattern.reason && (pattern.reason.includes("sequence") || pattern.reason.includes("pattern"))) {
+            signalStrength += 2;
+        } else if (pattern.reason && pattern.reason.includes("frequent")) {
+            signalStrength += 1;
+        }
             
-        # Factor 3: Recent trend
-        recent_three = list(last_digits)[-3:]
-        if sum(1 for d in recent_three if d > 4) >= 2:
-            signal_strength += 1
+        // Factor 3: Recent trend
+        const recentThree = lastDigits.slice(-3);
+        if (recentThree.filter(d => d > 4).length >= 2) {
+            signalStrength += 1;
+        }
             
-        # Determine signal based on strength
-        if signal_strength >= 5:
-            signal = "🚀 Strong Entry Signal"
-        elif signal_strength >= 3:
-            signal = "✅ Good to Enter"
-        elif signal_strength >= 2:
-            signal = "⚠️ Weak Signal"
-        else:
-            signal = "⏳ Wait for Better Setup"
+        // Determine signal based on strength
+        if (signalStrength >= 5) {
+            signal = "🚀 Strong Entry Signal";
+        } else if (signalStrength >= 3) {
+            signal = "✅ Good to Enter";
+        } else if (signalStrength >= 2) {
+            signal = "⚠️ Weak Signal";
+        } else {
+            signal = "⏳ Wait for Better Setup";
+        }
+        
+        predicted = pattern.digit !== null ? `${pattern.digit} - ${pattern.reason}` : "Analyzing patterns...";
+    }
+
+    res.json({
+        last_digits: lastDigits,
+        over_count: overCount,
+        total_digits: totalDigits,
+        over_percentage: overPercentage,
+        signal: signal,
+        digit_counts: digitCounts,
+        predicted: predicted,
+        trade_history: tradeHistory,
+        connection_status: connectionStatus
+    });
+});
+
+app.get('/change_market', (req, res) => {
+    marketSymbol = req.query.symbol || "R_10";
+    lastDigits = []; // Reset digits when market changes
+    tradeHistory = []; // Reset trade history
+    console.log(`Market changed to: ${marketSymbol}`);
     
-    predicted = f"{predicted_digit} - {pattern_reason}" if 'predicted_digit' in locals() and predicted_digit is not None else "Analyzing patterns..."
-
-    return jsonify({
-        "last_digits": list(last_digits),
-        "over_count": over_count,
-        "total_digits": total_digits,
-        "over_percentage": over_percentage,
-        "signal": signal,
-        "digit_counts": digit_counts,
-        "predicted": predicted,
-        "trade_history": trade_history,
-        "connection_status": connection_status
-    })
-
-@app.route('/change_market')
-def change_market():
-    global market_symbol, last_digits, trade_history
-    market_symbol = request.args.get("symbol", "R_10")
-    last_digits = deque(maxlen=watch_count)  # Reset digits when market changes
-    trade_history = []  # Reset trade history
-    print(f"Market changed to: {market_symbol}")
-    return '', 204
-
-@app.route('/toggle_trade')
-def toggle_trade():
-    global trade_enabled
-    trade_enabled = request.args.get("state") == "on"
-    status = "enabled" if trade_enabled else "disabled"
-    print(f"🔄 Auto-trade is now {status}")
-    return '', 204
-
-async def deriv_tick_listener():
-    global market_symbol, trade_enabled, connection_status, last_tick_time
+    // Reconnect WebSocket with new market
+    if (ws) {
+        ws.close();
+    }
+    connectToDerivWS();
     
-    while True:
-        try:
-            connection_status = "Connecting..."
-            async with websockets.connect(deriv_ws_url) as ws:
-                connection_status = "Connected"
-                print(f"✅ Connected to Deriv WebSocket for {market_symbol}")
+    res.status(204).send();
+});
+
+app.get('/toggle_trade', (req, res) => {
+    tradeEnabled = req.query.state === "on";
+    const status = tradeEnabled ? "enabled" : "disabled";
+    console.log(`🔄 Auto-trade is now ${status}`);
+    res.status(204).send();
+});
+
+// WebSocket connection to Deriv
+function connectToDerivWS() {
+    try {
+        connectionStatus = "Connecting...";
+        ws = new WebSocket(derivWsUrl);
+        
+        ws.on('open', () => {
+            connectionStatus = "Connected";
+            console.log(`✅ Connected to Deriv WebSocket for ${marketSymbol}`);
+            
+            // Subscribe to ticks
+            ws.send(JSON.stringify({ ticks: marketSymbol }));
+        });
+        
+        ws.on('message', (data) => {
+            try {
+                const response = JSON.parse(data.toString());
                 
-                # Subscribe to ticks
-                await ws.send(json.dumps({"ticks": market_symbol}))
-                
-                while True:
-                    response = await ws.recv()
-                    data = json.loads(response)
+                if (response.tick) {
+                    lastTickTime = new Date();
+                    const quote = response.tick.quote;
+                    const lastDigit = parseInt(quote.toString().slice(-1));
                     
-                    if 'tick' in data:
-                        last_tick_time = datetime.now()
-                        quote = data['tick']['quote']
-                        last_digit = int(str(quote)[-1])
-                        last_digits.append(last_digit)
+                    // Maintain array size
+                    lastDigits.push(lastDigit);
+                    if (lastDigits.length > watchCount) {
+                        lastDigits.shift();
+                    }
+                    
+                    console.log(`📊 ${marketSymbol}: ${quote} -> Digit: ${lastDigit}`);
+
+                    // Enhanced trading logic
+                    const overCount = lastDigits.filter(d => d > 4).length;
+                    if (tradeEnabled && lastDigits.length >= watchCount) {
+                        let shouldTrade = false;
                         
-                        print(f"📊 {market_symbol}: {quote} -> Digit: {last_digit}")
+                        // Condition 1: Basic threshold
+                        if (overCount >= overThreshold) {
+                            shouldTrade = true;
+                        }
+                        
+                        // Condition 2: Pattern-based entry
+                        const pattern = detectPattern(lastDigits);
+                        if (overCount >= overThreshold - 1 && 
+                            pattern.reason && 
+                            (pattern.reason.includes("sequence") || pattern.reason.includes("pattern"))) {
+                            shouldTrade = true;
+                        }
+                        
+                        if (shouldTrade) {
+                            mockTradeAction();
+                            // Longer cooldown to prevent overtrading
+                            setTimeout(() => {}, 5000);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error parsing WebSocket message:', error);
+            }
+        });
+        
+        ws.on('close', () => {
+            connectionStatus = "Disconnected";
+            console.log("❌ WebSocket connection closed. Reconnecting...");
+            setTimeout(connectToDerivWS, 3000);
+        });
+        
+        ws.on('error', (error) => {
+            connectionStatus = "Error";
+            console.log(`❌ WebSocket Error: ${error}. Reconnecting in 5 seconds...`);
+            setTimeout(connectToDerivWS, 5000);
+        });
+        
+    } catch (error) {
+        connectionStatus = "Error";
+        console.error('Failed to connect to WebSocket:', error);
+        setTimeout(connectToDerivWS, 5000);
+    }
+}
 
-                        # Enhanced trading logic
-                        over_count = sum(1 for d in last_digits if d > 4)
-                        if trade_enabled and len(last_digits) >= watch_count:
-                            # Multiple conditions for trade execution
-                            should_trade = False
-                            
-                            # Condition 1: Basic threshold
-                            if over_count >= over_threshold:
-                                should_trade = True
-                                
-                            # Condition 2: Pattern-based entry
-                            predicted_digit, pattern_reason = detect_pattern(last_digits)
-                            if (over_count >= over_threshold - 1 and 
-                                pattern_reason and 
-                                ("sequence" in pattern_reason or "pattern" in pattern_reason)):
-                                should_trade = True
-                            
-                            if should_trade:
-                                mock_trade_action()
-                                await asyncio.sleep(5)  # Longer cooldown to prevent overtrading
-                                
-        except websockets.exceptions.ConnectionClosed:
-            connection_status = "Disconnected"
-            print("❌ WebSocket connection closed. Reconnecting...")
-            await asyncio.sleep(3)
-        except Exception as e:
-            connection_status = "Error"
-            print(f"❌ WebSocket Error: {e}. Reconnecting in 5 seconds...")
-            await asyncio.sleep(5)
-
-# Start WebSocket listener in a background thread
-def start_ws_listener():
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(deriv_tick_listener())
-
-threading.Thread(target=start_ws_listener, daemon=True).start()
-
-if __name__ == '__main__':
-    print("🚀 Starting Zeus - Digit Over 4 Watcher")
-    print("📊 Dashboard will be available at: http://localhost:5001")
-    app.run(debug=True, port=5001, host='0.0.0.0')
+// Start the server
+app.listen(PORT, '0.0.0.0', () => {
+    console.log('🚀 Starting Zeus - Digit Over 4 Watcher');
+    console.log(`📊 Dashboard available at: http://localhost:${PORT}`);
+    
+    // Start WebSocket connection
+    connectToDerivWS();
+});
