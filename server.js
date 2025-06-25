@@ -21,24 +21,90 @@ let ws = null;
 let userApiToken = "";
 let accountInfo = null;
 let isAccountConnected = false;
+let accountWs = null;
+
+// Trading configuration
+let tradeConfig = {
+    amount: 1,
+    duration: 1,
+    durationType: 'ticks',
+    contractType: 'CALL',
+    basis: 'stake'
+};
+
+// Auto-trade cooldown
+let lastTradeTime = 0;
+const TRADE_COOLDOWN = 30000; // 30 seconds between trades
 
 // Middleware
 app.use(express.json());
 
 // Utility functions
+function executeRealTrade() {
+    if (!isAccountConnected || !accountWs || accountWs.readyState !== WebSocket.OPEN) {
+        console.log('❌ Cannot execute trade: Account not connected');
+        return false;
+    }
+
+    const now = Date.now();
+    if (now - lastTradeTime < TRADE_COOLDOWN) {
+        console.log('⏳ Trade cooldown active, skipping trade');
+        return false;
+    }
+
+    const tradeTime = new Date().toLocaleTimeString();
+    
+    // Send buy contract request
+    const buyRequest = {
+        buy: 1,
+        price: tradeConfig.amount,
+        parameters: {
+            contract_type: tradeConfig.contractType,
+            symbol: marketSymbol,
+            duration: tradeConfig.duration,
+            duration_unit: tradeConfig.durationType,
+            basis: tradeConfig.basis,
+            amount: tradeConfig.amount
+        }
+    };
+
+    accountWs.send(JSON.stringify(buyRequest));
+    lastTradeTime = now;
+
+    // Record trade in history
+    const tradeData = {
+        time: tradeTime,
+        action: tradeConfig.contractType,
+        reason: "Auto-trade executed",
+        digits: lastDigits.slice(-5),
+        amount: tradeConfig.amount,
+        status: "Pending"
+    };
+    
+    tradeHistory.push(tradeData);
+    if (tradeHistory.length > 20) {
+        tradeHistory.shift();
+    }
+
+    console.log(`🚀 Real Trade Executed at ${tradeTime}: ${tradeConfig.contractType} - $${tradeConfig.amount}`);
+    return true;
+}
+
 function mockTradeAction() {
     const tradeTime = new Date().toLocaleTimeString();
     const tradeData = {
         time: tradeTime,
-        action: "CALL",
-        reason: "Over 4 threshold reached",
-        digits: lastDigits.slice(-5) // Last 5 digits
+        action: tradeConfig.contractType,
+        reason: "Mock trade (account not connected)",
+        digits: lastDigits.slice(-5),
+        amount: tradeConfig.amount,
+        status: "Mock"
     };
     tradeHistory.push(tradeData);
-    if (tradeHistory.length > 10) { // Keep only last 10 trades
+    if (tradeHistory.length > 20) {
         tradeHistory.shift();
     }
-    console.log(`🔁 Mock Trade Executed at ${tradeTime}: CALL on Over 4`);
+    console.log(`🔁 Mock Trade Executed at ${tradeTime}: ${tradeConfig.contractType} - $${tradeConfig.amount}`);
 }
 
 function detectPattern(digits) {
@@ -241,11 +307,20 @@ const HTML_PAGE = `
             border: 1px solid #dc3545;
         }
         
+        .account-controls {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        
         .api-input-group {
             display: flex;
             gap: 0.75rem;
             align-items: end;
-            margin-bottom: 1rem;
+            flex: 1;
+            min-width: 250px;
         }
         
         .api-input-group input {
@@ -287,6 +362,10 @@ const HTML_PAGE = `
             transform: none;
         }
         
+        .api-button.disconnect {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+        }
+        
         .account-info {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -318,7 +397,7 @@ const HTML_PAGE = `
         
         .controls-card {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 1.5rem;
             align-items: center;
         }
@@ -337,7 +416,8 @@ const HTML_PAGE = `
             letter-spacing: 0.5px;
         }
         
-        .control-group select {
+        .control-group select,
+        .control-group input[type="number"] {
             padding: 0.75rem;
             border: 2px solid #e1e5e9;
             border-radius: 10px;
@@ -346,7 +426,8 @@ const HTML_PAGE = `
             transition: border-color 0.3s ease;
         }
         
-        .control-group select:focus {
+        .control-group select:focus,
+        .control-group input[type="number"]:focus {
             outline: none;
             border-color: #667eea;
         }
@@ -394,6 +475,17 @@ const HTML_PAGE = `
         
         input:checked + .slider:before {
             transform: translateX(22px);
+        }
+        
+        .trade-config-card {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            border: 1px solid #ffc107;
+        }
+        
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
         }
         
         .stats-grid {
@@ -620,6 +712,10 @@ const HTML_PAGE = `
             font-weight: 600;
         }
         
+        .trade-action.mock {
+            background: #6c757d;
+        }
+        
         .trade-digits {
             display: flex;
             gap: 0.2rem;
@@ -635,6 +731,12 @@ const HTML_PAGE = `
             font-size: 0.6rem;
             font-weight: 600;
             color: white;
+        }
+        
+        .trade-amount {
+            font-size: 0.8rem;
+            color: #666;
+            font-weight: 600;
         }
         
         .section-title {
@@ -654,6 +756,16 @@ const HTML_PAGE = `
             border-radius: 8px;
             margin-top: 0.75rem;
             border: 1px solid #f5c6cb;
+            font-size: 0.9rem;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-top: 0.75rem;
+            border: 1px solid #c3e6cb;
             font-size: 0.9rem;
         }
         
@@ -698,6 +810,11 @@ const HTML_PAGE = `
                 gap: 1rem;
             }
             
+            .config-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+            }
+            
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 0.75rem;
@@ -726,10 +843,14 @@ const HTML_PAGE = `
                 font-size: 1.1rem;
             }
             
-            .api-input-group {
+            .account-controls {
                 flex-direction: column;
                 align-items: stretch;
                 gap: 0.5rem;
+            }
+            
+            .api-input-group {
+                min-width: auto;
             }
             
             .api-button {
@@ -772,6 +893,10 @@ const HTML_PAGE = `
         
         @media (max-width: 480px) {
             .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .config-grid {
                 grid-template-columns: 1fr;
             }
             
@@ -838,6 +963,9 @@ const HTML_PAGE = `
                 // Update account info
                 updateAccountInfo(data.account_info, data.is_account_connected);
                 
+                // Update trade config display
+                updateTradeConfig(data.trade_config);
+                
                 // Update digits with enhanced circular design
                 const digitsList = document.getElementById('last_digits');
                 digitsList.innerHTML = '';
@@ -874,9 +1002,13 @@ const HTML_PAGE = `
         function updateAccountInfo(accountInfo, isConnected) {
             const accountCard = document.getElementById('account-card');
             const accountInfoDiv = document.getElementById('account-info');
+            const connectBtn = document.getElementById('connect-btn');
+            const disconnectBtn = document.getElementById('disconnect-btn');
             
             if (isConnected && accountInfo) {
                 accountCard.className = 'card account-card';
+                connectBtn.style.display = 'none';
+                disconnectBtn.style.display = 'inline-block';
                 accountInfoDiv.innerHTML = \`
                     <div class="account-stat">
                         <h4>Account ID</h4>
@@ -897,7 +1029,18 @@ const HTML_PAGE = `
                 \`;
             } else {
                 accountCard.className = 'card account-card disconnected';
+                connectBtn.style.display = 'inline-block';
+                disconnectBtn.style.display = 'none';
                 accountInfoDiv.innerHTML = '<div style="text-align: center; color: #666;">Enter your API token to view account details</div>';
+            }
+        }
+        
+        function updateTradeConfig(config) {
+            if (config) {
+                document.getElementById('trade-amount').value = config.amount;
+                document.getElementById('trade-duration').value = config.duration;
+                document.getElementById('duration-type').value = config.durationType;
+                document.getElementById('contract-type').value = config.contractType;
             }
         }
         
@@ -924,9 +1067,14 @@ const HTML_PAGE = `
                     \`<div class="trade-digit \${d > 4 ? 'digit-over' : 'digit-under'}">\${d}</div>\`
                 ).join('');
                 
+                const actionClass = trade.status === 'Mock' ? 'trade-action mock' : 'trade-action';
+                
                 tradeItem.innerHTML = \`
-                    <div class="trade-time">\${trade.time}</div>
-                    <div class="trade-action">\${trade.action}</div>
+                    <div>
+                        <div class="trade-time">\${trade.time}</div>
+                        <div class="trade-amount">$\${trade.amount}</div>
+                    </div>
+                    <div class="\${actionClass}">\${trade.action}</div>
                     <div class="trade-digits">\${digitsHtml}</div>
                 \`;
                 
@@ -943,10 +1091,28 @@ const HTML_PAGE = `
             await fetch(\`/toggle_trade?state=\${checkbox.checked ? 'on' : 'off'}\`);
         }
         
+        async function updateTradeConfig() {
+            const config = {
+                amount: parseFloat(document.getElementById('trade-amount').value),
+                duration: parseInt(document.getElementById('trade-duration').value),
+                durationType: document.getElementById('duration-type').value,
+                contractType: document.getElementById('contract-type').value
+            };
+            
+            await fetch('/update_trade_config', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(config)
+            });
+        }
+        
         async function connectAccount() {
             const apiToken = document.getElementById('api-token').value.trim();
             const button = document.getElementById('connect-btn');
             const errorDiv = document.getElementById('api-error');
+            const successDiv = document.getElementById('api-success');
             
             if (!apiToken) {
                 showError('Please enter your API token');
@@ -956,6 +1122,7 @@ const HTML_PAGE = `
             button.disabled = true;
             button.innerText = 'Connecting...';
             errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
             
             try {
                 const response = await fetch('/connect_account', {
@@ -969,8 +1136,8 @@ const HTML_PAGE = `
                 const result = await response.json();
                 
                 if (result.success) {
-                    button.innerText = 'Connected ✓';
-                    button.style.background = '#28a745';
+                    showSuccess('Account connected successfully! Real trading is now enabled.');
+                    document.getElementById('api-token').value = '';
                 } else {
                     showError(result.error || 'Failed to connect account');
                     button.disabled = false;
@@ -983,10 +1150,45 @@ const HTML_PAGE = `
             }
         }
         
+        async function disconnectAccount() {
+            const button = document.getElementById('disconnect-btn');
+            button.disabled = true;
+            button.innerText = 'Disconnecting...';
+            
+            try {
+                const response = await fetch('/disconnect_account', {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSuccess('Account disconnected successfully. Switched to mock trading mode.');
+                } else {
+                    showError(result.error || 'Failed to disconnect account');
+                }
+            } catch (error) {
+                showError('Disconnection failed: ' + error.message);
+            } finally {
+                button.disabled = false;
+                button.innerText = 'Disconnect';
+            }
+        }
+        
         function showError(message) {
             const errorDiv = document.getElementById('api-error');
+            const successDiv = document.getElementById('api-success');
             errorDiv.innerText = message;
             errorDiv.style.display = 'block';
+            successDiv.style.display = 'none';
+        }
+        
+        function showSuccess(message) {
+            const errorDiv = document.getElementById('api-error');
+            const successDiv = document.getElementById('api-success');
+            successDiv.innerText = message;
+            successDiv.style.display = 'block';
+            errorDiv.style.display = 'none';
         }
         
         // Check for connection timeout
@@ -1015,13 +1217,46 @@ const HTML_PAGE = `
     <div class="container">
         <div class="card account-card disconnected" id="account-card">
             <h2 class="section-title">👤 Account Integration</h2>
-            <div class="api-input-group">
-                <input type="password" id="api-token" placeholder="Enter your Deriv API token..." />
-                <button class="api-button" id="connect-btn" onclick="connectAccount()">Connect Account</button>
+            <div class="account-controls">
+                <div class="api-input-group">
+                    <input type="password" id="api-token" placeholder="Enter your Deriv API token..." />
+                    <button class="api-button" id="connect-btn" onclick="connectAccount()">Connect Account</button>
+                    <button class="api-button disconnect" id="disconnect-btn" onclick="disconnectAccount()" style="display: none;">Disconnect</button>
+                </div>
             </div>
             <div id="api-error" class="error-message" style="display: none;"></div>
+            <div id="api-success" class="success-message" style="display: none;"></div>
             <div class="account-info" id="account-info">
                 <div style="text-align: center; color: #666;">Enter your API token to view account details</div>
+            </div>
+        </div>
+        
+        <div class="card trade-config-card">
+            <h2 class="section-title">⚙️ Trading Configuration</h2>
+            <div class="config-grid">
+                <div class="control-group">
+                    <label>Trade Amount ($)</label>
+                    <input type="number" id="trade-amount" value="1" min="0.35" step="0.01" onchange="updateTradeConfig()">
+                </div>
+                <div class="control-group">
+                    <label>Duration</label>
+                    <input type="number" id="trade-duration" value="1" min="1" onchange="updateTradeConfig()">
+                </div>
+                <div class="control-group">
+                    <label>Duration Type</label>
+                    <select id="duration-type" onchange="updateTradeConfig()">
+                        <option value="ticks">Ticks</option>
+                        <option value="seconds">Seconds</option>
+                        <option value="minutes">Minutes</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>Contract Type</label>
+                    <select id="contract-type" onchange="updateTradeConfig()">
+                        <option value="CALL">Over (Call)</option>
+                        <option value="PUT">Under (Put)</option>
+                    </select>
+                </div>
             </div>
         </div>
         
@@ -1042,6 +1277,10 @@ const HTML_PAGE = `
                     <input type="checkbox" onchange="toggleTrade(this)">
                     <span class="slider"></span>
                 </label>
+            </div>
+            <div class="control-group">
+                <label>Trade Status</label>
+                <div id="trade-status" style="font-weight: 600; color: #666;">Mock Mode</div>
             </div>
         </div>
         
@@ -1193,7 +1432,8 @@ app.get('/check', (req, res) => {
         account_info: accountInfo,
         is_account_connected: isAccountConnected,
         last_tick_price: lastTickTime ? ws?.lastPrice : null,
-        last_tick_time: lastTickTime ? lastTickTime.toLocaleTimeString() : null
+        last_tick_time: lastTickTime ? lastTickTime.toLocaleTimeString() : null,
+        trade_config: tradeConfig
     });
 });
 
@@ -1205,8 +1445,13 @@ app.post('/connect_account', async (req, res) => {
     }
     
     try {
-        // Create a new WebSocket connection for account info
-        const accountWs = new WebSocket(derivWsUrl);
+        // Close existing account connection if any
+        if (accountWs && accountWs.readyState === WebSocket.OPEN) {
+            accountWs.close();
+        }
+        
+        // Create a new WebSocket connection for account
+        accountWs = new WebSocket(derivWsUrl);
         
         accountWs.on('open', () => {
             // Authorize with the API token
@@ -1220,7 +1465,7 @@ app.post('/connect_account', async (req, res) => {
                 const response = JSON.parse(data.toString());
                 
                 if (response.authorize) {
-                    // Successfully authorized, get account info
+                    // Successfully authorized
                     userApiToken = api_token;
                     accountInfo = {
                         loginid: response.authorize.loginid,
@@ -1232,32 +1477,54 @@ app.post('/connect_account', async (req, res) => {
                     isAccountConnected = true;
                     
                     console.log(`✅ Account connected: ${accountInfo.loginid}`);
-                    accountWs.close();
-                    
                     res.json({ success: true, account_info: accountInfo });
                 } else if (response.error) {
                     console.log(`❌ Account connection failed: ${response.error.message}`);
-                    accountWs.close();
-                    
+                    isAccountConnected = false;
+                    accountInfo = null;
                     res.json({ success: false, error: response.error.message });
+                } else if (response.buy) {
+                    // Trade execution response
+                    console.log(`💰 Trade executed: Contract ID ${response.buy.contract_id}`);
+                    
+                    // Update trade history with contract details
+                    const lastTrade = tradeHistory[tradeHistory.length - 1];
+                    if (lastTrade && lastTrade.status === "Pending") {
+                        lastTrade.status = "Executed";
+                        lastTrade.contract_id = response.buy.contract_id;
+                        lastTrade.payout = response.buy.payout;
+                    }
+                } else if (response.proposal_open_contract) {
+                    // Contract update
+                    const contract = response.proposal_open_contract;
+                    console.log(`📊 Contract update: ${contract.contract_id} - Status: ${contract.status}`);
                 }
             } catch (error) {
                 console.error('Error parsing account response:', error);
-                accountWs.close();
-                res.json({ success: false, error: 'Failed to parse account response' });
             }
         });
         
         accountWs.on('error', (error) => {
             console.error('Account WebSocket error:', error);
-            res.json({ success: false, error: 'Connection failed' });
+            isAccountConnected = false;
+            accountInfo = null;
+            if (!res.headersSent) {
+                res.json({ success: false, error: 'Connection failed' });
+            }
+        });
+        
+        accountWs.on('close', () => {
+            console.log('Account WebSocket closed');
+            isAccountConnected = false;
         });
         
         // Timeout after 10 seconds
         setTimeout(() => {
-            if (accountWs.readyState === WebSocket.OPEN) {
+            if (accountWs && accountWs.readyState === WebSocket.CONNECTING) {
                 accountWs.close();
-                res.json({ success: false, error: 'Connection timeout' });
+                if (!res.headersSent) {
+                    res.json({ success: false, error: 'Connection timeout' });
+                }
             }
         }, 10000);
         
@@ -1265,6 +1532,40 @@ app.post('/connect_account', async (req, res) => {
         console.error('Account connection error:', error);
         res.json({ success: false, error: 'Failed to connect to account' });
     }
+});
+
+app.post('/disconnect_account', (req, res) => {
+    try {
+        if (accountWs && accountWs.readyState === WebSocket.OPEN) {
+            accountWs.close();
+        }
+        
+        userApiToken = "";
+        accountInfo = null;
+        isAccountConnected = false;
+        accountWs = null;
+        
+        console.log('🔌 Account disconnected - Switched to mock trading mode');
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Disconnect error:', error);
+        res.json({ success: false, error: 'Failed to disconnect account' });
+    }
+});
+
+app.post('/update_trade_config', (req, res) => {
+    const { amount, duration, durationType, contractType } = req.body;
+    
+    tradeConfig = {
+        amount: amount || 1,
+        duration: duration || 1,
+        durationType: durationType || 'ticks',
+        contractType: contractType || 'CALL',
+        basis: 'stake'
+    };
+    
+    console.log('⚙️ Trade config updated:', tradeConfig);
+    res.json({ success: true });
 });
 
 app.get('/change_market', (req, res) => {
@@ -1328,7 +1629,7 @@ function connectToDerivWS() {
                     
                     console.log(`📊 ${marketSymbol}: ${quote} -> Digit: ${lastDigit} (from: ${digitsOnly})`);
 
-                    // Enhanced trading logic with proper auto-trade functionality
+                    // Enhanced trading logic with REAL trade execution
                     const overCount = lastDigits.filter(d => d > 4).length;
                     if (tradeEnabled && lastDigits.length >= watchCount) {
                         let shouldTrade = false;
@@ -1352,7 +1653,12 @@ function connectToDerivWS() {
                         }
                         
                         if (shouldTrade) {
-                            mockTradeAction();
+                            // Execute real trade if account connected, otherwise mock trade
+                            if (isAccountConnected) {
+                                executeRealTrade();
+                            } else {
+                                mockTradeAction();
+                            }
                         }
                     }
                 }
