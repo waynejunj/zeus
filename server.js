@@ -115,7 +115,7 @@ function detectPattern(digits) {
     return { digit: predicted, reason: "Weighted recent trend analysis", confidence: 45 };
 }
 
-// Enhanced HTML template
+// Enhanced HTML template with mobile improvements
 const HTML_PAGE = `
 <!DOCTYPE html>
 <html lang="en">
@@ -136,12 +136,13 @@ const HTML_PAGE = `
             min-height: 100vh;
             color: #333;
             line-height: 1.6;
+            font-size: 14px;
         }
         
         .header {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            padding: 1rem 0;
+            padding: 0.75rem 0;
             box-shadow: 0 2px 20px rgba(0,0,0,0.1);
             position: sticky;
             top: 0;
@@ -154,11 +155,11 @@ const HTML_PAGE = `
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 2rem;
+            padding: 0 1rem;
         }
         
         .logo {
-            font-size: 2rem;
+            font-size: 1.5rem;
             font-weight: 800;
             background: linear-gradient(135deg, #667eea, #764ba2);
             -webkit-background-clip: text;
@@ -170,9 +171,9 @@ const HTML_PAGE = `
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            border-radius: 25px;
-            font-size: 0.9rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
             font-weight: 600;
         }
         
@@ -187,8 +188,8 @@ const HTML_PAGE = `
         }
         
         .status-dot {
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
             animation: pulse 2s infinite;
         }
@@ -209,24 +210,24 @@ const HTML_PAGE = `
         
         .container { 
             max-width: 1200px; 
-            margin: 2rem auto; 
-            padding: 0 2rem;
+            margin: 1rem auto; 
+            padding: 0 1rem;
             display: grid;
-            gap: 2rem;
+            gap: 1rem;
         }
         
         .card {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 2rem;
+            border-radius: 16px;
+            padding: 1.5rem;
             box-shadow: 0 8px 32px rgba(0,0,0,0.1);
             border: 1px solid rgba(255,255,255,0.2);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         
         .card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-2px);
             box-shadow: 0 12px 40px rgba(0,0,0,0.15);
         }
         
@@ -242,19 +243,20 @@ const HTML_PAGE = `
         
         .api-input-group {
             display: flex;
-            gap: 1rem;
+            gap: 0.75rem;
             align-items: end;
             margin-bottom: 1rem;
         }
         
         .api-input-group input {
             flex: 1;
-            padding: 1rem;
+            padding: 0.75rem;
             border: 2px solid #e1e5e9;
-            border-radius: 12px;
-            font-size: 1rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
             background: white;
             transition: border-color 0.3s ease;
+            min-width: 0;
         }
         
         .api-input-group input:focus {
@@ -263,14 +265,16 @@ const HTML_PAGE = `
         }
         
         .api-button {
-            padding: 1rem 2rem;
+            padding: 0.75rem 1.5rem;
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             border: none;
-            border-radius: 12px;
+            border-radius: 10px;
             font-weight: 600;
             cursor: pointer;
             transition: transform 0.3s ease;
+            white-space: nowrap;
+            font-size: 0.9rem;
         }
         
         .api-button:hover {
@@ -285,58 +289,59 @@ const HTML_PAGE = `
         
         .account-info {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.75rem;
             margin-top: 1rem;
         }
         
         .account-stat {
             background: rgba(255, 255, 255, 0.7);
-            padding: 1rem;
-            border-radius: 12px;
+            padding: 0.75rem;
+            border-radius: 10px;
             text-align: center;
         }
         
         .account-stat h4 {
-            font-size: 0.9rem;
+            font-size: 0.75rem;
             color: #666;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.25rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
         
         .account-stat .value {
-            font-size: 1.2rem;
+            font-size: 1rem;
             font-weight: 700;
             color: #333;
+            word-break: break-all;
         }
         
         .controls-card {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 2rem;
+            gap: 1.5rem;
             align-items: center;
         }
         
         .control-group {
             display: flex;
             flex-direction: column;
-            gap: 1rem;
+            gap: 0.75rem;
         }
         
         .control-group label {
             font-weight: 600;
             color: #555;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
         
         .control-group select {
-            padding: 1rem;
+            padding: 0.75rem;
             border: 2px solid #e1e5e9;
-            border-radius: 12px;
-            font-size: 1rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
             background: white;
             transition: border-color 0.3s ease;
         }
@@ -349,8 +354,8 @@ const HTML_PAGE = `
         .toggle-switch {
             position: relative;
             display: inline-block;
-            width: 60px;
-            height: 34px;
+            width: 50px;
+            height: 28px;
         }
         
         .toggle-switch input {
@@ -368,16 +373,16 @@ const HTML_PAGE = `
             bottom: 0;
             background-color: #ccc;
             transition: .4s;
-            border-radius: 34px;
+            border-radius: 28px;
         }
         
         .slider:before {
             position: absolute;
             content: "";
-            height: 26px;
-            width: 26px;
-            left: 4px;
-            bottom: 4px;
+            height: 22px;
+            width: 22px;
+            left: 3px;
+            bottom: 3px;
             background-color: white;
             transition: .4s;
             border-radius: 50%;
@@ -388,39 +393,39 @@ const HTML_PAGE = `
         }
         
         input:checked + .slider:before {
-            transform: translateX(26px);
+            transform: translateX(22px);
         }
         
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
         }
         
         .stat-card {
             background: linear-gradient(135deg, #f8f9ff 0%, #e8f0ff 100%);
-            padding: 1.5rem;
-            border-radius: 16px;
+            padding: 1rem;
+            border-radius: 12px;
             text-align: center;
             border: 1px solid rgba(102, 126, 234, 0.1);
         }
         
         .stat-card h3 {
-            font-size: 0.9rem;
+            font-size: 0.75rem;
             color: #666;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.25rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
         
         .stat-card .value {
-            font-size: 2rem;
+            font-size: 1.5rem;
             font-weight: 800;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.25rem;
         }
         
         .stat-card .description {
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             color: #888;
         }
         
@@ -431,19 +436,19 @@ const HTML_PAGE = `
         .digits-container {
             display: flex;
             justify-content: center;
-            gap: 1rem;
+            gap: 0.5rem;
             flex-wrap: wrap;
             margin: 1rem 0;
         }
         
         .digit-circle {
-            width: 60px;
-            height: 60px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             font-weight: 700;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             transition: transform 0.3s ease;
@@ -451,7 +456,7 @@ const HTML_PAGE = `
         }
         
         .digit-circle:hover {
-            transform: scale(1.1);
+            transform: scale(1.05);
         }
         
         .digit-under { 
@@ -480,11 +485,12 @@ const HTML_PAGE = `
             width: 100%;
             border-collapse: collapse;
             margin-top: 1rem;
+            font-size: 0.9rem;
         }
         
         .frequency-table th,
         .frequency-table td {
-            padding: 1rem;
+            padding: 0.75rem 0.5rem;
             text-align: center;
             border-bottom: 1px solid #eee;
         }
@@ -495,6 +501,7 @@ const HTML_PAGE = `
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            font-size: 0.8rem;
         }
         
         .frequency-table tr:hover {
@@ -507,8 +514,9 @@ const HTML_PAGE = `
         .legend {
             display: flex;
             justify-content: center;
-            gap: 2rem;
-            margin: 1.5rem 0;
+            gap: 1.5rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
         }
         
         .legend-item {
@@ -516,11 +524,12 @@ const HTML_PAGE = `
             align-items: center;
             gap: 0.5rem;
             font-weight: 600;
+            font-size: 0.9rem;
         }
         
         .legend-color {
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
@@ -536,27 +545,29 @@ const HTML_PAGE = `
         .prediction-card {
             background: linear-gradient(135deg, #fff9e6, #fff3cd);
             border: 1px solid #ffeaa7;
-            border-radius: 12px;
-            padding: 1.5rem;
+            border-radius: 10px;
+            padding: 1rem;
             margin-top: 1rem;
         }
         
         .prediction-card h4 {
             color: #856404;
             margin-bottom: 0.5rem;
+            font-size: 1rem;
         }
         
         .prediction-value {
-            font-size: 1.2rem;
+            font-size: 1rem;
             font-weight: 700;
             color: #533f03;
+            margin-bottom: 0.5rem;
         }
         
         .confidence-bar {
             width: 100%;
-            height: 8px;
+            height: 6px;
             background: #e9ecef;
-            border-radius: 4px;
+            border-radius: 3px;
             margin-top: 0.5rem;
             overflow: hidden;
         }
@@ -564,19 +575,19 @@ const HTML_PAGE = `
         .confidence-fill {
             height: 100%;
             background: linear-gradient(90deg, #ff6b6b, #ffc107, #28a745);
-            border-radius: 4px;
+            border-radius: 3px;
             transition: width 0.5s ease;
         }
         
         .confidence-text {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             color: #666;
             margin-top: 0.25rem;
             text-align: center;
         }
         
         .trade-history {
-            max-height: 300px;
+            max-height: 250px;
             overflow-y: auto;
         }
         
@@ -584,9 +595,10 @@ const HTML_PAGE = `
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem;
+            padding: 0.75rem;
             border-bottom: 1px solid #eee;
             transition: background 0.3s ease;
+            font-size: 0.9rem;
         }
         
         .trade-item:hover {
@@ -596,38 +608,39 @@ const HTML_PAGE = `
         .trade-time {
             font-weight: 600;
             color: #667eea;
+            font-size: 0.8rem;
         }
         
         .trade-action {
             background: #28a745;
             color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 15px;
+            font-size: 0.7rem;
             font-weight: 600;
         }
         
         .trade-digits {
             display: flex;
-            gap: 0.25rem;
+            gap: 0.2rem;
         }
         
         .trade-digit {
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.7rem;
+            font-size: 0.6rem;
             font-weight: 600;
             color: white;
         }
         
         .section-title {
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             font-weight: 700;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
             color: #2c3e50;
             display: flex;
             align-items: center;
@@ -637,53 +650,149 @@ const HTML_PAGE = `
         .error-message {
             background: #f8d7da;
             color: #721c24;
-            padding: 1rem;
+            padding: 0.75rem;
             border-radius: 8px;
-            margin-top: 1rem;
+            margin-top: 0.75rem;
             border: 1px solid #f5c6cb;
+            font-size: 0.9rem;
+        }
+        
+        .tick-info {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border: 1px solid #2196f3;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .tick-price {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #1976d2;
+            margin-bottom: 0.25rem;
+        }
+        
+        .tick-time {
+            font-size: 0.8rem;
+            color: #666;
         }
         
         @media (max-width: 768px) {
+            body {
+                font-size: 13px;
+            }
+            
             .container {
-                padding: 0 1rem;
+                padding: 0 0.75rem;
+                gap: 0.75rem;
+            }
+            
+            .card {
+                padding: 1rem;
+                border-radius: 12px;
             }
             
             .controls-card {
                 grid-template-columns: 1fr;
-            }
-            
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .header-content {
-                padding: 0 1rem;
-                flex-direction: column;
                 gap: 1rem;
             }
             
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+            }
+            
+            .header-content {
+                padding: 0 0.75rem;
+            }
+            
+            .logo {
+                font-size: 1.3rem;
+            }
+            
+            .connection-status {
+                font-size: 0.7rem;
+                padding: 0.3rem 0.6rem;
+            }
+            
             .digits-container {
-                gap: 0.5rem;
+                gap: 0.4rem;
             }
             
             .digit-circle {
-                width: 50px;
-                height: 50px;
-                font-size: 1.2rem;
+                width: 40px;
+                height: 40px;
+                font-size: 1.1rem;
             }
             
             .api-input-group {
                 flex-direction: column;
                 align-items: stretch;
+                gap: 0.5rem;
+            }
+            
+            .api-button {
+                padding: 0.75rem;
             }
             
             .account-info {
                 grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+            
+            .account-stat .value {
+                font-size: 0.9rem;
+            }
+            
+            .section-title {
+                font-size: 1.1rem;
+            }
+            
+            .frequency-table th,
+            .frequency-table td {
+                padding: 0.5rem 0.25rem;
+                font-size: 0.8rem;
+            }
+            
+            .trade-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            
+            .legend {
+                gap: 1rem;
+            }
+            
+            .legend-item {
+                font-size: 0.8rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .digit-circle {
+                width: 35px;
+                height: 35px;
+                font-size: 1rem;
+            }
+            
+            .account-stat h4 {
+                font-size: 0.7rem;
+            }
+            
+            .account-stat .value {
+                font-size: 0.85rem;
             }
         }
     </style>
     <script>
         let lastUpdateTime = Date.now();
+        let lastTickPrice = null;
         
         async function updateStats() {
             try {
@@ -699,6 +808,12 @@ const HTML_PAGE = `
                 } else {
                     statusElement.className = 'connection-status disconnected';
                     statusElement.innerHTML = '<div class="status-dot disconnected" id="status-dot"></div>Disconnected';
+                }
+                
+                // Update tick info
+                if (data.last_tick_price && data.last_tick_time) {
+                    document.getElementById('tick-price').innerText = data.last_tick_price;
+                    document.getElementById('tick-time').innerText = 'Last update: ' + data.last_tick_time;
                 }
                 
                 // Update stats
@@ -736,7 +851,7 @@ const HTML_PAGE = `
                 
                 // Update frequency table
                 const freqTable = document.getElementById('digit_freq');
-                freqTable.innerHTML = '<tr><th>Digit</th><th>Count</th><th>Percentage</th></tr>';
+                freqTable.innerHTML = '<tr><th>Digit</th><th>Count</th><th>%</th></tr>';
                 data.digit_counts.forEach((count, i) => {
                     const row = freqTable.insertRow();
                     row.className = i > 4 ? 'digit-row-over' : 'digit-row-under';
@@ -797,7 +912,7 @@ const HTML_PAGE = `
             historyContainer.innerHTML = '';
             
             if (trades.length === 0) {
-                historyContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 2rem;">No trades executed yet</div>';
+                historyContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 1.5rem;">No trades executed yet</div>';
                 return;
             }
             
@@ -931,6 +1046,10 @@ const HTML_PAGE = `
         </div>
         
         <div class="card">
+            <div class="tick-info">
+                <div class="tick-price" id="tick-price">Waiting for data...</div>
+                <div class="tick-time" id="tick-time">Connecting...</div>
+            </div>
             <div class="stats-grid">
                 <div class="stat-card">
                     <h3>Over 4 Count</h3>
@@ -982,14 +1101,14 @@ const HTML_PAGE = `
         <div class="card">
             <h2 class="section-title">📊 Digit Frequency Analysis</h2>
             <table class="frequency-table" id="digit_freq">
-                <tr><th>Digit</th><th>Count</th><th>Percentage</th></tr>
+                <tr><th>Digit</th><th>Count</th><th>%</th></tr>
             </table>
         </div>
         
         <div class="card">
             <h2 class="section-title">📈 Trade History</h2>
             <div class="trade-history" id="trade_history">
-                <div style="text-align: center; color: #666; padding: 2rem;">No trades executed yet</div>
+                <div style="text-align: center; color: #666; padding: 1.5rem;">No trades executed yet</div>
             </div>
         </div>
     </div>
@@ -1072,7 +1191,9 @@ app.get('/check', (req, res) => {
         trade_history: tradeHistory,
         connection_status: connectionStatus,
         account_info: accountInfo,
-        is_account_connected: isAccountConnected
+        is_account_connected: isAccountConnected,
+        last_tick_price: lastTickTime ? ws?.lastPrice : null,
+        last_tick_time: lastTickTime ? lastTickTime.toLocaleTimeString() : null
     });
 });
 
@@ -1168,7 +1289,7 @@ app.get('/toggle_trade', (req, res) => {
     res.status(204).send();
 });
 
-// WebSocket connection to Deriv
+// WebSocket connection to Deriv - FIXED digit extraction
 function connectToDerivWS() {
     try {
         connectionStatus = "Connecting...";
@@ -1189,7 +1310,15 @@ function connectToDerivWS() {
                 if (response.tick) {
                     lastTickTime = new Date();
                     const quote = response.tick.quote;
-                    const lastDigit = parseInt(quote.toString().slice(-1));
+                    
+                    // FIXED: Proper digit extraction matching Deriv's method
+                    // Convert to string, remove decimal point, get last digit
+                    const quoteStr = quote.toString();
+                    const digitsOnly = quoteStr.replace('.', '');
+                    const lastDigit = parseInt(digitsOnly.slice(-1));
+                    
+                    // Store the price for display
+                    ws.lastPrice = quote;
                     
                     // Maintain array size
                     lastDigits.push(lastDigit);
@@ -1197,9 +1326,9 @@ function connectToDerivWS() {
                         lastDigits.shift();
                     }
                     
-                    console.log(`📊 ${marketSymbol}: ${quote} -> Digit: ${lastDigit}`);
+                    console.log(`📊 ${marketSymbol}: ${quote} -> Digit: ${lastDigit} (from: ${digitsOnly})`);
 
-                    // Enhanced trading logic
+                    // Enhanced trading logic with proper auto-trade functionality
                     const overCount = lastDigits.filter(d => d > 4).length;
                     if (tradeEnabled && lastDigits.length >= watchCount) {
                         let shouldTrade = false;
@@ -1216,10 +1345,14 @@ function connectToDerivWS() {
                             shouldTrade = true;
                         }
                         
+                        // Condition 3: Strong signal with lower threshold
+                        if (overCount >= overThreshold - 2 && 
+                            pattern.confidence >= 85) {
+                            shouldTrade = true;
+                        }
+                        
                         if (shouldTrade) {
                             mockTradeAction();
-                            // Longer cooldown to prevent overtrading
-                            setTimeout(() => {}, 5000);
                         }
                     }
                 }
