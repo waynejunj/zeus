@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zeus - Digit Over 4 Watcher</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 10px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #4a5568;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: clamp(0.8rem, 2vw, 1rem);
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        @media (min-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .connection-section {
+            margin-bottom: 20px;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e53e3e;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.connected {
+            background: #38a169;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 0.9rem;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e53e3e, #c53030);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(229, 62, 62, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #38a169, #2f855a);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(56, 161, 105, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .digit-display {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .current-digit {
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: bold;
+            color: #4a5568;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .digit-over-4 {
+            color: #38a169;
+            animation: glow 1s ease-in-out;
+        }
+
+        @keyframes glow {
+            0%, 100% { text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1); }
+            50% { text-shadow: 0 0 20px rgba(56, 161, 105, 0.6); }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 10px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            font-weight: bold;
+            color: #4a5568;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #718096;
+            margin-top: 2px;
+        }
+
+        .auto-trade-section {
+            border-top: 2px solid #e2e8f0;
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+
+        .trade-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .history-section {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            margin: 5px 0;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .history-item.win {
+            border-left: 4px solid #38a169;
+        }
+
+        .history-item.loss {
+            border-left: 4px solid #e53e3e;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #38a169;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .alert {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .alert-success {
+            background: rgba(56, 161, 105, 0.1);
+            border: 1px solid #38a169;
+            color: #2f855a;
+        }
+
+        .alert-error {
+            background: rgba(229, 62, 62, 0.1);
+            border: 1px solid #e53e3e;
+            color: #c53030;
+        }
+
+        .alert-info {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid #667eea;
+            color: #5a67d8;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 5px;
+            }
+            
+            .card {
+                padding: 10px;
+            }
+            
+            .btn {
+                padding: 8px 16px;
+                font-size: 12px;
+            }
+            
+            .trade-controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ Zeus - Digit Watcher</h1>
+            <p>Advanced Digit Over 4 Trading System</p>
+        </div>
+
+        <div class="main-grid">
+            <div class="card">
+                <div class="connection-section">
+                    <div class="connection-status">
+                        <div class="status-indicator" id="connectionStatus"></div>
+                        <span id="connectionText">Disconnected</span>
+                        <button class="btn btn-danger" id="disconnectBtn" onclick="disconnect()" style="display: none;">Disconnect</button>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="appId">App ID:</label>
+                        <input type="text" id="appId" placeholder="Enter your Deriv App ID" value="1089">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="apiToken">API Token:</label>
+                        <input type="password" id="apiToken" placeholder="Enter your API Token">
+                    </div>
+
+                    <button class="btn btn-primary" id="connectBtn" onclick="connect()">Connect to Deriv</button>
+                </div>
+
+                <div class="digit-display">
+                    <div class="current-digit" id="currentDigit">-</div>
+                    <div style="font-size: 1rem; color: #718096; margin-top: 10px;">
+                        Current Last Digit
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalTicks">0</div>
+                        <div class="stat-label">Total Ticks</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="over4Count">0</div>
+                        <div class="stat-label">Over 4</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="over4Percentage">0%</div>
+                        <div class="stat-label">Over 4 %</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="balance">$0.00</div>
+                        <div class="stat-label">Balance</div>
+                    </div>
+                </div>
+
+                <div class="auto-trade-section">
+                    <h3 style="margin-bottom: 15px; color: #4a5568;">🤖 Auto Trading</h3>
+                    
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="autoTradeToggle" onchange="toggleAutoTrade()">
+                            <span class="slider"></span>
+                        </label>
+                        <span>Auto Trade: <span id="autoTradeStatus">OFF</span></span>
+                    </div>
+
+                    <div class="trade-controls">
+                        <div class="input-group">
+                            <label for="tradeAmount">Trade Amount ($):</label>
+                            <input type="number" id="tradeAmount" value="1" min="0.35" step="0.01">
+                        </div>
+                        <div class="input-group">
+                            <label for="tradeDuration">Duration (ticks):</label>
+                            <select id="tradeDuration">
+                                <option value="1">1 tick</option>
+                                <option value="2">2 ticks</option>
+                                <option value="3">3 ticks</option>
+                                <option value="4">4 ticks</option>
+                                <option value="5" selected>5 ticks</option>
+                                <option value="10">10 ticks</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="tradeStrategy">Strategy:</label>
+                            <select id="tradeStrategy">
+                                <option value="over4">Digit Over 4</option>
+                                <option value="under5">Digit Under 5</option>
+                                <option value="even">Even Digits</option>
+                                <option value="odd">Odd Digits</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="maxTrades">Max Trades/Hour:</label>
+                            <input type="number" id="maxTrades" value="10" min="1" max="100">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn btn-success" onclick="placeTrade()" id="manualTradeBtn">Place Manual Trade</button>
+                        <button class="btn btn-primary" onclick="testTrade()">Test Trade</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 style="margin-bottom: 15px; color: #4a5568;">📊 Trade History</h3>
+                <div class="history-section" id="tradeHistory">
+                    <div style="text-align: center; color: #718096; padding: 20px;">
+                        No trades yet
+                    </div>
+                </div>
+                
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid #e2e8f0;">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="totalTrades">0</div>
+                            <div class="stat-label">Total Trades</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="winRate">0%</div>
+                            <div class="stat-label">Win Rate</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="totalProfit">$0.00</div>
+                            <div class="stat-label">Total P&L</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="alertContainer"></div>
+    </div>
+
+    <script>
+        let ws = null;
+        let derivWs = null;
+        let isConnected = false;
+        let autoTradeEnabled = false;
+        let tickCount = 0;
+        let over4Count = 0;
+        let tradeHistory = [];
+        let currentBalance = 0;
+        let tradesThisHour = 0;
+        let lastTradeTime = 0;
+        let isTrading = false;
+
+        // Reset hourly trade counter
+        setInterval(() => {
+            tradesThisHour = 0;
+        }, 3600000); // Reset every hour
+
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alertContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        function connect() {
+            const appId = document.getElementById('appId').value;
+            const apiToken = document.getElementById('apiToken').value;
+
+            if (!appId || !apiToken) {
+                showAlert('Please enter both App ID and API Token', 'error');
+                return;
+            }
+
+            try {
+                // Connect to Deriv WebSocket
+                derivWs = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${appId}`);
+                
+                derivWs.onopen = function() {
+                    console.log('Connected to Deriv WebSocket');
+                    
+                    // Authorize with API token
+                    derivWs.send(JSON.stringify({
+                        authorize: apiToken
+                    }));
+                };
+
+                derivWs.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    console.log('Deriv message:', data);
+                    
+                    if (data.msg_type === 'authorize') {
+                        if (data.error) {
+                            showAlert(`Authorization failed: ${data.error.message}`, 'error');
+                            return;
+                        }
+                        
+                        isConnected = true;
+                        currentBalance = data.authorize.balance;
+                        updateConnectionStatus();
+                        updateBalance();
+                        showAlert('Successfully connected to Deriv!', 'success');
+                        
+                        // Subscribe to tick stream for Volatility 75 Index
+                        derivWs.send(JSON.stringify({
+                            ticks: 'R_75',
+                            subscribe: 1
+                        }));
+                        
+                        // Get account balance
+                        derivWs.send(JSON.stringify({
+                            balance: 1,
+                            subscribe: 1
+                        }));
+                    }
+                    
+                    if (data.msg_type === 'tick') {
+                        handleTick(data.tick);
+                    }
+                    
+                    if (data.msg_type === 'balance') {
+                        currentBalance = data.balance.balance;
+                        updateBalance();
+                    }
+                    
+                    if (data.msg_type === 'buy') {
+                        handleTradeResult(data);
+                    }
+                    
+                    if (data.msg_type === 'proposal_open_contract') {
+                        handleContractUpdate(data);
+                    }
+                };
+
+                derivWs.onerror = function(error) {
+                    console.error('Deriv WebSocket error:', error);
+                    showAlert('Connection error occurred', 'error');
+                };
+
+                derivWs.onclose = function() {
+                    console.log('Deriv WebSocket closed');
+                    isConnected = false;
+                    updateConnectionStatus();
+                    showAlert('Disconnected from Deriv', 'info');
+                };
+
+            } catch (error) {
+                console.error('Connection error:', error);
+                showAlert('Failed to connect to Deriv', 'error');
+            }
+        }
+
+        function disconnect() {
+            if (derivWs) {
+                derivWs.close();
+            }
+            isConnected = false;
+            autoTradeEnabled = false;
+            document.getElementById('autoTradeToggle').checked = false;
+            updateConnectionStatus();
+            updateAutoTradeStatus();
+            showAlert('Disconnected from Deriv', 'info');
+        }
+
+        function handleTick(tick) {
+            const lastDigit = parseInt(tick.quote.toString().slice(-1));
+            
+            tickCount++;
+            if (lastDigit > 4) {
+                over4Count++;
+                document.getElementById('currentDigit').className = 'current-digit digit-over-4';
+            } else {
+                document.getElementById('currentDigit').className = 'current-digit';
+            }
+            
+            document.getElementById('currentDigit').textContent = lastDigit;
+            updateStats();
+            
+            // Auto trade logic
+            if (autoTradeEnabled && shouldTrade(lastDigit)) {
+                setTimeout(() => placeTrade(true), 1000); // Small delay to ensure tick is processed
+            }
+        }
+
+        function shouldTrade(lastDigit) {
+            const strategy = document.getElementById('tradeStrategy').value;
+            const maxTrades = parseInt(document.getElementById('maxTrades').value);
+            const now = Date.now();
+            
+            // Check if we've exceeded max trades per hour
+            if (tradesThisHour >= maxTrades) {
+                return false;
+            }
+            
+            // Prevent too frequent trading (minimum 30 seconds between trades)
+            if (now - lastTradeTime < 30000) {
+                return false;
+            }
+            
+            // Don't trade if already in a trade
+            if (isTrading) {
+                return false;
+            }
+            
+            // Strategy logic
+            switch (strategy) {
+                case 'over4':
+                    return lastDigit > 4;
+                case 'under5':
+                    return lastDigit < 5;
+                case 'even':
+                    return lastDigit % 2 === 0;
+                case 'odd':
+                    return lastDigit % 2 === 1;
+                default:
+                    return false;
+            }
+        }
+
+        function placeTrade(isAuto = false) {
+            if (!isConnected) {
+                showAlert('Please connect to Deriv first', 'error');
+                return;
+            }
+            
+            if (isTrading) {
+                showAlert('Trade already in progress', 'error');
+                return;
+            }
+            
+            const amount = parseFloat(document.getElementById('tradeAmount').value);
+            const duration = parseInt(document.getElementById('tradeDuration').value);
+            const strategy = document.getElementById('tradeStrategy').value;
+            
+            if (amount < 0.35) {
+                showAlert('Minimum trade amount is $0.35', 'error');
+                return;
+            }
+            
+            if (amount > currentBalance) {
+                showAlert('Insufficient balance', 'error');
+                return;
+            }
+            
+            isTrading = true;
+            lastTradeTime = Date.now();
+            tradesThisHour++;
+            
+            // Get contract type based on strategy
+            let contractType, barrier;
+            switch (strategy) {
+                case 'over4':
+                    contractType = 'DIGITOVER';
+                    barrier = '4';
+                    break;
+                case 'under5':
+                    contractType = 'DIGITUNDER';
+                    barrier = '5';
+                    break;
+                case 'even':
+                    contractType = 'DIGITEVEN';
+                    barrier = '';
+                    break;
+                case 'odd':
+                    contractType = 'DIGITODD';
+                    barrier = '';
+                    break;
+                default:
+                    contractType = 'DIGITOVER';
+                    barrier = '4';
+            }
+            
+            // First get a proposal
+            const proposalRequest = {
+                proposal: 1,
+                amount: amount,
+                basis: 'stake',
+                contract_type: contractType,
+                currency: 'USD',
+                duration: duration,
+                duration_unit: 't',
+                symbol: 'R_75'
+            };
+            
+            if (barrier) {
+                proposalRequest.barrier = barrier;
+            }
+            
+            console.log('Sending proposal:', proposalRequest);
+            derivWs.send(JSON.stringify(proposalRequest));
+            
+            // Listen for proposal response
+            const originalOnMessage = derivWs.onmessage;
+            derivWs.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                
+                if (data.msg_type === 'proposal') {
+                    if (data.error) {
+                        showAlert(`Trade proposal failed: ${data.error.message}`, 'error');
+                        isTrading = false;
+                        derivWs.onmessage = originalOnMessage;
+                        return;
+                    }
+                    
+                    // Now buy the contract
+                    const buyRequest = {
+                        buy: data.proposal.id,
+                        price: amount
+                    };
+                    
+                    console.log('Buying contract:', buyRequest);
+                    derivWs.send(JSON.stringify(buyRequest));
+                }
+                
+                if (data.msg_type === 'buy') {
+                    if (data.error) {
+                        showAlert(`Trade failed: ${data.error.message}`, 'error');
+                        isTrading = false;
+                    } else {
+                        showAlert(`Trade placed successfully! Contract ID: ${data.buy.contract_id}`, 'success');
+                        
+                        // Subscribe to contract updates
+                        derivWs.send(JSON.stringify({
+                            proposal_open_contract: 1,
+                            contract_id: data.buy.contract_id,
+                            subscribe: 1
+                        }));
+                        
+                        // Add to trade history
+                        const trade = {
+                            id: data.buy.contract_id,
+                            type: strategy,
+                            amount: amount,
+                            time: new Date().toLocaleTimeString(),
+                            status: 'open',
+                            isAuto: isAuto
+                        };
+                        
+                        tradeHistory.unshift(trade);
+                        updateTradeHistory();
+                    }
+                    
+                    derivWs.onmessage = originalOnMessage;
+                }
+                
+                // Call original handler for other messages
+                originalOnMessage(event);
+            };
+        }
+
+        function handleContractUpdate(data) {
+            if (data.proposal_open_contract) {
+                const contract = data.proposal_open_contract;
+                
+                // Find the trade in history
+                const tradeIndex = tradeHistory.findIndex(t => t.id === contract.contract_id);
+                if (tradeIndex !== -1) {
+                    const trade = tradeHistory[tradeIndex];
+                    
+                    if (contract.is_sold) {
+                        trade.status = contract.profit > 0 ? 'win' : 'loss';
+                        trade.profit = contract.profit;
+                        trade.payout = contract.payout;
+                        isTrading = false;
+                        
+                        updateTradeHistory();
+                        updateTradeStats();
+                        
+                        const message = contract.profit > 0 
+                            ? `Trade won! Profit: $${contract.profit.toFixed(2)}`
+                            : `Trade lost. Loss: $${Math.abs(contract.profit).toFixed(2)}`;
+                        
+                        showAlert(message, contract.profit > 0 ? 'success' : 'error');
+                    }
+                }
+            }
+        }
+
+        function testTrade() {
+            if (!isConnected) {
+                showAlert('Please connect to Deriv first', 'error');
+                return;
+            }
+            
+            // Simulate a test trade
+            const testTrade = {
+                id: 'TEST_' + Date.now(),
+                type: 'test',
+                amount: 1.00,
+                time: new Date().toLocaleTimeString(),
+                status: Math.random() > 0.5 ? 'win' : 'loss',
+                profit: Math.random() > 0.5 ? 0.85 : -1.00,
+                isAuto: false
+            };
+            
+            tradeHistory.unshift(testTrade);
+            updateTradeHistory();
+            updateTradeStats();
+            showAlert('Test trade completed', 'info');
+        }
+
+        function toggleAutoTrade() {
+            const toggle = document.getElementById('autoTradeToggle');
+            autoTradeEnabled = toggle.checked;
+            updateAutoTradeStatus();
+            
+            if (autoTradeEnabled && !isConnected) {
+                showAlert('Please connect to Deriv first', 'error');
+                toggle.checked = false;
+                autoTradeEnabled = false;
+                updateAutoTradeStatus();
+                return;
+            }
+            
+            const message = autoTradeEnabled ? 'Auto trading enabled' : 'Auto trading disabled';
+            showAlert(message, autoTradeEnabled ? 'success' : 'info');
+        }
+
+        function updateConnectionStatus() {
+            const statusIndicator = document.getElementById('connectionStatus');
+            const statusText = document.getElementById('connectionText');
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            
+            if (isConnected) {
+                statusIndicator.classList.add('connected');
+                statusText.textContent = 'Connected to Deriv';
+                connectBtn.style.display = 'none';
+                disconnectBtn.style.display = 'inline-block';
+            } else {
+                statusIndicator.classList.remove('connected');
+                statusText.textContent = 'Disconnected';
+                connectBtn.style.display = 'inline-block';
+                disconnectBtn.style.display = 'none';
+            }
+        }
+
+        function updateAutoTradeStatus() {
+            document.getElementById('autoTradeStatus').textContent = autoTradeEnabled ? 'ON' : 'OFF';
+        }
+
+        function updateStats() {
+            document.getElementById('totalTicks').textContent = tickCount;
+            document.getElementById('over4Count').textContent = over4Count;
+            const percentage = tickCount > 0 ? ((over4Count / tickCount) * 100).toFixed(1) : 0;
+            document.getElementById('over4Percentage').textContent = percentage + '%';
+        }
+
+        function updateBalance() {
+            document.getElementById('balance').textContent = '$' + currentBalance.toFixed(2);
+        }
+
+        function updateTradeHistory() {
+            const historyContainer = document.getElementById('tradeHistory');
+            
+            if (tradeHistory.length === 0) {
+                historyContainer.innerHTML = '<div style="text-align: center; color: #718096; padding: 20px;">No trades yet</div>';
+                return;
+            }
+            
+            historyContainer.innerHTML = tradeHistory.slice(0, 20).map(trade => `
+                <div class="history-item ${trade.status}">
+                    <div>
+                        <strong>${trade.type.toUpperCase()}</strong>
+                        ${trade.isAuto ? '🤖' : '👤'}
+                        <br>
+                        <small>${trade.time}</small>
+                    </div>
+                    <div>
+                        $${trade.amount.toFixed(2)}
+                        <br>
+                        <small style="color: ${trade.status === 'win' ? '#38a169' : trade.status === 'loss' ? '#e53e3e' : '#718096'}">
+                            ${trade.status === 'open' ? 'OPEN' : 
+                              trade.status === 'win' ? `+$${trade.profit.toFixed(2)}` : 
+                              trade.status === 'loss' ? `$${trade.profit.toFixed(2)}` : 'PENDING'}
+                        </small>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateTradeStats() {
+            const completedTrades = tradeHistory.filter(t => t.status === 'win' || t.status === 'loss');
+            const wins = tradeHistory.filter(t => t.status === 'win').length;
+            const winRate = completedTrades.length > 0 ? ((wins / completedTrades.length) * 100).toFixed(1) : 0;
+            const totalProfit = tradeHistory.reduce((sum, trade) => {
+                return sum + (trade.profit || 0);
+            }, 0);
+            
+            document.getElementById('totalTrades').textContent = completedTrades.length;
+            document.getElementById('winRate').textContent = winRate + '%';
+            document.getElementById('totalProfit').textContent = '$' + totalProfit.toFixed(2);
+        }
+
+        // Initialize
+        updateConnectionStatus();
+        updateAutoTradeStatus();
+        updateStats();
+        updateBalance();
+    </script>
+</body>
+</html>
