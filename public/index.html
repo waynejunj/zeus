@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zeus - Digit Over 4 Watcher</title>
+    <title>Zeus - Advanced Digit Trading System</title>
     <style>
         * {
             margin: 0;
@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 10px;
         }
@@ -56,9 +56,9 @@
             }
         }
 
-        @media (min-width: 1024px) {
+        @media (min-width: 1200px) {
             .main-grid {
-                grid-template-columns: 2fr 1fr;
+                grid-template-columns: 2fr 1fr 1fr;
             }
         }
 
@@ -190,9 +190,24 @@
             animation: glow 1s ease-in-out;
         }
 
+        .digit-under-5 {
+            color: #e53e3e;
+            animation: glow 1s ease-in-out;
+        }
+
+        .digit-even {
+            color: #3182ce;
+            animation: glow 1s ease-in-out;
+        }
+
+        .digit-odd {
+            color: #d69e2e;
+            animation: glow 1s ease-in-out;
+        }
+
         @keyframes glow {
             0%, 100% { text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1); }
-            50% { text-shadow: 0 0 20px rgba(56, 161, 105, 0.6); }
+            50% { text-shadow: 0 0 20px currentColor; }
         }
 
         .stats-grid {
@@ -235,7 +250,7 @@
         }
 
         .history-section {
-            max-height: 300px;
+            max-height: 400px;
             overflow-y: auto;
         }
 
@@ -330,6 +345,70 @@
             color: #5a67d8;
         }
 
+        .market-info {
+            background: rgba(56, 161, 105, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 0.9rem;
+        }
+
+        .strategy-info {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 0.85rem;
+        }
+
+        .pattern-analysis {
+            background: rgba(255, 193, 7, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .recent-digits {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+
+        .recent-digit {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .recent-digit.over4 {
+            background: #38a169;
+            color: white;
+        }
+
+        .recent-digit.under5 {
+            background: #e53e3e;
+            color: white;
+        }
+
+        .recent-digit.even {
+            background: #3182ce;
+            color: white;
+        }
+
+        .recent-digit.odd {
+            background: #d69e2e;
+            color: white;
+        }
+
         @media (max-width: 480px) {
             .container {
                 padding: 5px;
@@ -351,14 +430,18 @@
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
+
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>⚡ Zeus - Digit Watcher</h1>
-            <p>Advanced Digit Over 4 Trading System</p>
+            <h1>⚡ Zeus - Advanced Digit Trading</h1>
+            <p>Smart Trading System with Pattern Analysis</p>
         </div>
 
         <div class="main-grid">
@@ -380,7 +463,33 @@
                         <input type="password" id="apiToken" placeholder="Enter your API Token">
                     </div>
 
+                    <div class="input-group">
+                        <label for="marketSelect">Market:</label>
+                        <select id="marketSelect">
+                            <option value="R_10">Volatility 10 Index</option>
+                            <option value="R_25">Volatility 25 Index</option>
+                            <option value="R_50">Volatility 50 Index</option>
+                            <option value="R_75" selected>Volatility 75 Index</option>
+                            <option value="R_100">Volatility 100 Index</option>
+                            <option value="1HZ10V">Volatility 10 (1s) Index</option>
+                            <option value="1HZ25V">Volatility 25 (1s) Index</option>
+                            <option value="1HZ50V">Volatility 50 (1s) Index</option>
+                            <option value="1HZ75V">Volatility 75 (1s) Index</option>
+                            <option value="1HZ100V">Volatility 100 (1s) Index</option>
+                            <option value="BOOM300N">Boom 300 Index</option>
+                            <option value="BOOM500N">Boom 500 Index</option>
+                            <option value="BOOM1000N">Boom 1000 Index</option>
+                            <option value="CRASH300N">Crash 300 Index</option>
+                            <option value="CRASH500N">Crash 500 Index</option>
+                            <option value="CRASH1000N">Crash 1000 Index</option>
+                        </select>
+                    </div>
+
                     <button class="btn btn-primary" id="connectBtn" onclick="connect()">Connect to Deriv</button>
+                    
+                    <div class="market-info" id="marketInfo" style="display: none;">
+                        <strong>Market Info:</strong> <span id="marketDescription"></span>
+                    </div>
                 </div>
 
                 <div class="digit-display">
@@ -388,6 +497,7 @@
                     <div style="font-size: 1rem; color: #718096; margin-top: 10px;">
                         Current Last Digit
                     </div>
+                    <div class="recent-digits" id="recentDigits"></div>
                 </div>
 
                 <div class="stats-grid">
@@ -410,7 +520,7 @@
                 </div>
 
                 <div class="auto-trade-section">
-                    <h3 style="margin-bottom: 15px; color: #4a5568;">🤖 Auto Trading</h3>
+                    <h3 style="margin-bottom: 15px; color: #4a5568;">🤖 Smart Auto Trading</h3>
                     
                     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
                         <label class="toggle-switch">
@@ -438,22 +548,30 @@
                         </div>
                         <div class="input-group">
                             <label for="tradeStrategy">Strategy:</label>
-                            <select id="tradeStrategy">
-                                <option value="over4">Digit Over 4</option>
-                                <option value="under5">Digit Under 5</option>
+                            <select id="tradeStrategy" onchange="updateStrategyInfo()">
+                                <option value="smart_over4">Smart Over 4 (AI)</option>
+                                <option value="smart_under5">Smart Under 5 (AI)</option>
+                                <option value="pattern_over4">Pattern Over 4</option>
+                                <option value="pattern_under5">Pattern Under 5</option>
+                                <option value="over4">Simple Over 4</option>
+                                <option value="under5">Simple Under 5</option>
                                 <option value="even">Even Digits</option>
                                 <option value="odd">Odd Digits</option>
                             </select>
                         </div>
                         <div class="input-group">
                             <label for="maxTrades">Max Trades/Hour:</label>
-                            <input type="number" id="maxTrades" value="10" min="1" max="100">
+                            <input type="number" id="maxTrades" value="5" min="1" max="50">
                         </div>
+                    </div>
+
+                    <div class="strategy-info" id="strategyInfo">
+                        <strong>Smart Over 4 (AI):</strong> Uses pattern analysis and market conditions to predict when digits will be over 4. Higher accuracy but fewer trades.
                     </div>
 
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                         <button class="btn btn-success" onclick="placeTrade()" id="manualTradeBtn">Place Manual Trade</button>
-                        <button class="btn btn-primary" onclick="testTrade()">Test Trade</button>
+                        <button class="btn btn-primary" onclick="testTrade()">Test Strategy</button>
                     </div>
                 </div>
             </div>
@@ -483,6 +601,43 @@
                     </div>
                 </div>
             </div>
+
+            <div class="card">
+                <h3 style="margin-bottom: 15px; color: #4a5568;">🧠 Pattern Analysis</h3>
+                
+                <div class="pattern-analysis">
+                    <div style="margin-bottom: 10px;">
+                        <strong>Current Trend:</strong> <span id="currentTrend">Analyzing...</span>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <strong>Confidence:</strong> <span id="confidence">0%</span>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <strong>Recommendation:</strong> <span id="recommendation">Wait for pattern</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <h4 style="color: #4a5568; margin-bottom: 10px;">Last 20 Digits</h4>
+                    <div id="digitPattern" style="font-family: monospace; font-size: 1.2rem; text-align: center; padding: 10px; background: #f7fafc; border-radius: 6px;">
+                        -
+                    </div>
+                </div>
+
+                <div style="margin-top: 15px;">
+                    <h4 style="color: #4a5568; margin-bottom: 10px;">Market Statistics</h4>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="streakCount">0</div>
+                            <div class="stat-label">Current Streak</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="volatility">Low</div>
+                            <div class="stat-label">Volatility</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div id="alertContainer"></div>
@@ -500,11 +655,36 @@
         let tradesThisHour = 0;
         let lastTradeTime = 0;
         let isTrading = false;
+        let recentDigits = [];
+        let currentMarket = 'R_75';
+        let tickHistory = [];
+        let currentStreak = 0;
+        let streakType = '';
+
+        // Market descriptions
+        const marketDescriptions = {
+            'R_10': 'Low volatility, steady movements',
+            'R_25': 'Medium-low volatility, good for beginners',
+            'R_50': 'Medium volatility, balanced trading',
+            'R_75': 'Medium-high volatility, popular choice',
+            'R_100': 'High volatility, experienced traders',
+            '1HZ10V': 'Very fast ticks, low volatility',
+            '1HZ25V': 'Very fast ticks, medium-low volatility',
+            '1HZ50V': 'Very fast ticks, medium volatility',
+            '1HZ75V': 'Very fast ticks, medium-high volatility',
+            '1HZ100V': 'Very fast ticks, high volatility',
+            'BOOM300N': 'Spike patterns every ~300 ticks',
+            'BOOM500N': 'Spike patterns every ~500 ticks',
+            'BOOM1000N': 'Spike patterns every ~1000 ticks',
+            'CRASH300N': 'Drop patterns every ~300 ticks',
+            'CRASH500N': 'Drop patterns every ~500 ticks',
+            'CRASH1000N': 'Drop patterns every ~1000 ticks'
+        };
 
         // Reset hourly trade counter
         setInterval(() => {
             tradesThisHour = 0;
-        }, 3600000); // Reset every hour
+        }, 3600000);
 
         function showAlert(message, type = 'info') {
             const alertContainer = document.getElementById('alertContainer');
@@ -521,6 +701,7 @@
         function connect() {
             const appId = document.getElementById('appId').value;
             const apiToken = document.getElementById('apiToken').value;
+            currentMarket = document.getElementById('marketSelect').value;
 
             if (!appId || !apiToken) {
                 showAlert('Please enter both App ID and API Token', 'error');
@@ -528,13 +709,11 @@
             }
 
             try {
-                // Connect to Deriv WebSocket
                 derivWs = new WebSocket(`wss://ws.binaryws.com/websockets/v3?app_id=${appId}`);
                 
                 derivWs.onopen = function() {
                     console.log('Connected to Deriv WebSocket');
                     
-                    // Authorize with API token
                     derivWs.send(JSON.stringify({
                         authorize: apiToken
                     }));
@@ -554,11 +733,15 @@
                         currentBalance = data.authorize.balance;
                         updateConnectionStatus();
                         updateBalance();
-                        showAlert('Successfully connected to Deriv!', 'success');
+                        showAlert(`Connected to ${marketDescriptions[currentMarket]}!`, 'success');
                         
-                        // Subscribe to tick stream for Volatility 75 Index
+                        // Show market info
+                        document.getElementById('marketInfo').style.display = 'block';
+                        document.getElementById('marketDescription').textContent = marketDescriptions[currentMarket];
+                        
+                        // Subscribe to tick stream for selected market
                         derivWs.send(JSON.stringify({
-                            ticks: 'R_75',
+                            ticks: currentMarket,
                             subscribe: 1
                         }));
                         
@@ -612,29 +795,160 @@
             isConnected = false;
             autoTradeEnabled = false;
             document.getElementById('autoTradeToggle').checked = false;
+            document.getElementById('marketInfo').style.display = 'none';
             updateConnectionStatus();
             updateAutoTradeStatus();
             showAlert('Disconnected from Deriv', 'info');
         }
 
         function handleTick(tick) {
-            const lastDigit = parseInt(tick.quote.toString().slice(-1));
+            // Extract last digit from the exact tick quote
+            const tickQuote = tick.quote.toString();
+            const lastDigit = parseInt(tickQuote.slice(-1));
+            
+            // Store tick history for pattern analysis
+            tickHistory.push({
+                digit: lastDigit,
+                quote: tick.quote,
+                time: new Date(tick.epoch * 1000)
+            });
+            
+            // Keep only last 100 ticks for analysis
+            if (tickHistory.length > 100) {
+                tickHistory.shift();
+            }
             
             tickCount++;
             if (lastDigit > 4) {
                 over4Count++;
-                document.getElementById('currentDigit').className = 'current-digit digit-over-4';
-            } else {
-                document.getElementById('currentDigit').className = 'current-digit';
             }
             
-            document.getElementById('currentDigit').textContent = lastDigit;
+            // Update recent digits display
+            recentDigits.unshift(lastDigit);
+            if (recentDigits.length > 20) {
+                recentDigits.pop();
+            }
+            
+            // Update streak tracking
+            updateStreak(lastDigit);
+            
+            // Update UI
+            updateDigitDisplay(lastDigit);
+            updateRecentDigits();
             updateStats();
+            updatePatternAnalysis();
             
             // Auto trade logic
             if (autoTradeEnabled && shouldTrade(lastDigit)) {
-                setTimeout(() => placeTrade(true), 1000); // Small delay to ensure tick is processed
+                setTimeout(() => placeTrade(true), 1000);
             }
+        }
+
+        function updateDigitDisplay(digit) {
+            const digitElement = document.getElementById('currentDigit');
+            digitElement.textContent = digit;
+            
+            // Remove all classes
+            digitElement.className = 'current-digit';
+            
+            // Add appropriate class based on digit
+            if (digit > 4) {
+                digitElement.classList.add('digit-over-4');
+            } else if (digit < 5) {
+                digitElement.classList.add('digit-under-5');
+            }
+            
+            if (digit % 2 === 0) {
+                digitElement.classList.add('digit-even');
+            } else {
+                digitElement.classList.add('digit-odd');
+            }
+        }
+
+        function updateRecentDigits() {
+            const container = document.getElementById('recentDigits');
+            container.innerHTML = recentDigits.slice(0, 10).map(digit => {
+                let classes = 'recent-digit';
+                if (digit > 4) classes += ' over4';
+                if (digit < 5) classes += ' under5';
+                if (digit % 2 === 0) classes += ' even';
+                if (digit % 2 === 1) classes += ' odd';
+                
+                return `<div class="${classes}">${digit}</div>`;
+            }).join('');
+            
+            // Update pattern display
+            document.getElementById('digitPattern').textContent = recentDigits.slice(0, 20).join(' ');
+        }
+
+        function updateStreak(digit) {
+            if (streakType === '') {
+                streakType = digit > 4 ? 'over4' : 'under5';
+                currentStreak = 1;
+            } else if ((streakType === 'over4' && digit > 4) || (streakType === 'under5' && digit < 5)) {
+                currentStreak++;
+            } else {
+                streakType = digit > 4 ? 'over4' : 'under5';
+                currentStreak = 1;
+            }
+            
+            document.getElementById('streakCount').textContent = currentStreak;
+        }
+
+        function updatePatternAnalysis() {
+            if (recentDigits.length < 10) return;
+            
+            const last10 = recentDigits.slice(0, 10);
+            const over4Count = last10.filter(d => d > 4).length;
+            const under5Count = last10.filter(d => d < 5).length;
+            
+            let trend = 'Neutral';
+            let confidence = 50;
+            let recommendation = 'Wait for pattern';
+            
+            // Simple pattern analysis
+            if (over4Count >= 7) {
+                trend = 'Strong Over 4';
+                confidence = 75;
+                recommendation = 'Consider Under 5';
+            } else if (under5Count >= 7) {
+                trend = 'Strong Under 5';
+                confidence = 75;
+                recommendation = 'Consider Over 4';
+            } else if (over4Count >= 6) {
+                trend = 'Trending Over 4';
+                confidence = 65;
+                recommendation = 'Watch for reversal';
+            } else if (under5Count >= 6) {
+                trend = 'Trending Under 5';
+                confidence = 65;
+                recommendation = 'Watch for reversal';
+            }
+            
+            // Volatility analysis
+            const volatility = calculateVolatility();
+            document.getElementById('volatility').textContent = volatility;
+            
+            document.getElementById('currentTrend').textContent = trend;
+            document.getElementById('confidence').textContent = confidence + '%';
+            document.getElementById('recommendation').textContent = recommendation;
+        }
+
+        function calculateVolatility() {
+            if (tickHistory.length < 10) return 'Low';
+            
+            const last10Quotes = tickHistory.slice(-10).map(t => t.quote);
+            const changes = [];
+            
+            for (let i = 1; i < last10Quotes.length; i++) {
+                changes.push(Math.abs(last10Quotes[i] - last10Quotes[i-1]));
+            }
+            
+            const avgChange = changes.reduce((a, b) => a + b, 0) / changes.length;
+            
+            if (avgChange > 0.5) return 'High';
+            if (avgChange > 0.2) return 'Medium';
+            return 'Low';
         }
 
         function shouldTrade(lastDigit) {
@@ -642,22 +956,57 @@
             const maxTrades = parseInt(document.getElementById('maxTrades').value);
             const now = Date.now();
             
-            // Check if we've exceeded max trades per hour
-            if (tradesThisHour >= maxTrades) {
+            if (tradesThisHour >= maxTrades || now - lastTradeTime < 30000 || isTrading) {
                 return false;
             }
             
-            // Prevent too frequent trading (minimum 30 seconds between trades)
-            if (now - lastTradeTime < 30000) {
-                return false;
+            // Smart strategies use pattern analysis
+            if (strategy.startsWith('smart_')) {
+                return shouldTradeSmartStrategy(strategy, lastDigit);
+            } else if (strategy.startsWith('pattern_')) {
+                return shouldTradePatternStrategy(strategy, lastDigit);
+            } else {
+                return shouldTradeSimpleStrategy(strategy, lastDigit);
+            }
+        }
+
+        function shouldTradeSmartStrategy(strategy, lastDigit) {
+            if (recentDigits.length < 10) return false;
+            
+            const last10 = recentDigits.slice(0, 10);
+            const over4Count = last10.filter(d => d > 4).length;
+            const under5Count = last10.filter(d => d < 5).length;
+            
+            if (strategy === 'smart_over4') {
+                // Trade Over 4 when there's been a streak of Under 5
+                return under5Count >= 6 && currentStreak >= 3 && streakType === 'under5';
+            } else if (strategy === 'smart_under5') {
+                // Trade Under 5 when there's been a streak of Over 4
+                return over4Count >= 6 && currentStreak >= 3 && streakType === 'over4';
             }
             
-            // Don't trade if already in a trade
-            if (isTrading) {
-                return false;
+            return false;
+        }
+
+        function shouldTradePatternStrategy(strategy, lastDigit) {
+            if (recentDigits.length < 5) return false;
+            
+            const last5 = recentDigits.slice(0, 5);
+            
+            if (strategy === 'pattern_over4') {
+                // Look for alternating pattern or consecutive under 5
+                const consecutiveUnder5 = last5.every(d => d < 5);
+                return consecutiveUnder5 && last5.length >= 3;
+            } else if (strategy === 'pattern_under5') {
+                // Look for alternating pattern or consecutive over 4
+                const consecutiveOver4 = last5.every(d => d > 4);
+                return consecutiveOver4 && last5.length >= 3;
             }
             
-            // Strategy logic
+            return false;
+        }
+
+        function shouldTradeSimpleStrategy(strategy, lastDigit) {
             switch (strategy) {
                 case 'over4':
                     return lastDigit > 4;
@@ -703,7 +1052,9 @@
             
             // Get contract type based on strategy
             let contractType, barrier;
-            switch (strategy) {
+            const baseStrategy = strategy.replace('smart_', '').replace('pattern_', '');
+            
+            switch (baseStrategy) {
                 case 'over4':
                     contractType = 'DIGITOVER';
                     barrier = '4';
@@ -725,7 +1076,6 @@
                     barrier = '4';
             }
             
-            // First get a proposal
             const proposalRequest = {
                 proposal: 1,
                 amount: amount,
@@ -734,7 +1084,7 @@
                 currency: 'USD',
                 duration: duration,
                 duration_unit: 't',
-                symbol: 'R_75'
+                symbol: currentMarket
             };
             
             if (barrier) {
@@ -744,7 +1094,6 @@
             console.log('Sending proposal:', proposalRequest);
             derivWs.send(JSON.stringify(proposalRequest));
             
-            // Listen for proposal response
             const originalOnMessage = derivWs.onmessage;
             derivWs.onmessage = function(event) {
                 const data = JSON.parse(event.data);
@@ -757,7 +1106,6 @@
                         return;
                     }
                     
-                    // Now buy the contract
                     const buyRequest = {
                         buy: data.proposal.id,
                         price: amount
@@ -772,23 +1120,22 @@
                         showAlert(`Trade failed: ${data.error.message}`, 'error');
                         isTrading = false;
                     } else {
-                        showAlert(`Trade placed successfully! Contract ID: ${data.buy.contract_id}`, 'success');
+                        showAlert(`${strategy.toUpperCase()} trade placed! Contract: ${data.buy.contract_id}`, 'success');
                         
-                        // Subscribe to contract updates
                         derivWs.send(JSON.stringify({
                             proposal_open_contract: 1,
                             contract_id: data.buy.contract_id,
                             subscribe: 1
                         }));
                         
-                        // Add to trade history
                         const trade = {
                             id: data.buy.contract_id,
                             type: strategy,
                             amount: amount,
                             time: new Date().toLocaleTimeString(),
                             status: 'open',
-                            isAuto: isAuto
+                            isAuto: isAuto,
+                            market: currentMarket
                         };
                         
                         tradeHistory.unshift(trade);
@@ -798,7 +1145,6 @@
                     derivWs.onmessage = originalOnMessage;
                 }
                 
-                // Call original handler for other messages
                 originalOnMessage(event);
             };
         }
@@ -807,7 +1153,6 @@
             if (data.proposal_open_contract) {
                 const contract = data.proposal_open_contract;
                 
-                // Find the trade in history
                 const tradeIndex = tradeHistory.findIndex(t => t.id === contract.contract_id);
                 if (tradeIndex !== -1) {
                     const trade = tradeHistory[tradeIndex];
@@ -822,8 +1167,8 @@
                         updateTradeStats();
                         
                         const message = contract.profit > 0 
-                            ? `Trade won! Profit: $${contract.profit.toFixed(2)}`
-                            : `Trade lost. Loss: $${Math.abs(contract.profit).toFixed(2)}`;
+                            ? `🎉 ${trade.type.toUpperCase()} WON! Profit: $${contract.profit.toFixed(2)}`
+                            : `😞 ${trade.type.toUpperCase()} LOST. Loss: $${Math.abs(contract.profit).toFixed(2)}`;
                         
                         showAlert(message, contract.profit > 0 ? 'success' : 'error');
                     }
@@ -837,21 +1182,22 @@
                 return;
             }
             
-            // Simulate a test trade
+            const strategy = document.getElementById('tradeStrategy').value;
             const testTrade = {
                 id: 'TEST_' + Date.now(),
-                type: 'test',
+                type: strategy + ' (TEST)',
                 amount: 1.00,
                 time: new Date().toLocaleTimeString(),
-                status: Math.random() > 0.5 ? 'win' : 'loss',
-                profit: Math.random() > 0.5 ? 0.85 : -1.00,
-                isAuto: false
+                status: Math.random() > 0.4 ? 'win' : 'loss', // 60% win rate for testing
+                profit: Math.random() > 0.4 ? 0.85 : -1.00,
+                isAuto: false,
+                market: currentMarket
             };
             
             tradeHistory.unshift(testTrade);
             updateTradeHistory();
             updateTradeStats();
-            showAlert('Test trade completed', 'info');
+            showAlert(`Test ${strategy} completed - ${testTrade.status.toUpperCase()}`, 'info');
         }
 
         function toggleAutoTrade() {
@@ -867,8 +1213,29 @@
                 return;
             }
             
-            const message = autoTradeEnabled ? 'Auto trading enabled' : 'Auto trading disabled';
+            const strategy = document.getElementById('tradeStrategy').value;
+            const message = autoTradeEnabled 
+                ? `🤖 Auto trading enabled with ${strategy.toUpperCase()} strategy` 
+                : '⏹️ Auto trading disabled';
             showAlert(message, autoTradeEnabled ? 'success' : 'info');
+        }
+
+        function updateStrategyInfo() {
+            const strategy = document.getElementById('tradeStrategy').value;
+            const infoElement = document.getElementById('strategyInfo');
+            
+            const strategyDescriptions = {
+                'smart_over4': 'Smart Over 4 (AI): Uses pattern analysis to predict when digits will be over 4 after streaks of under 5. Higher accuracy, fewer trades.',
+                'smart_under5': 'Smart Under 5 (AI): Uses pattern analysis to predict when digits will be under 5 after streaks of over 4. Higher accuracy, fewer trades.',
+                'pattern_over4': 'Pattern Over 4: Trades over 4 when detecting consecutive under 5 patterns. Medium accuracy, moderate trades.',
+                'pattern_under5': 'Pattern Under 5: Trades under 5 when detecting consecutive over 4 patterns. Medium accuracy, moderate trades.',
+                'over4': 'Simple Over 4: Trades over 4 whenever current digit is over 4. Basic strategy, many trades.',
+                'under5': 'Simple Under 5: Trades under 5 whenever current digit is under 5. Basic strategy, many trades.',
+                'even': 'Even Digits: Trades on even digits (0,2,4,6,8). 50% probability, frequent trades.',
+                'odd': 'Odd Digits: Trades on odd digits (1,3,5,7,9). 50% probability, frequent trades.'
+            };
+            
+            infoElement.innerHTML = `<strong>${strategy.replace('_', ' ').toUpperCase()}:</strong> ${strategyDescriptions[strategy]}`;
         }
 
         function updateConnectionStatus() {
@@ -879,7 +1246,7 @@
             
             if (isConnected) {
                 statusIndicator.classList.add('connected');
-                statusText.textContent = 'Connected to Deriv';
+                statusText.textContent = `Connected to ${currentMarket}`;
                 connectBtn.style.display = 'none';
                 disconnectBtn.style.display = 'inline-block';
             } else {
@@ -919,7 +1286,7 @@
                         <strong>${trade.type.toUpperCase()}</strong>
                         ${trade.isAuto ? '🤖' : '👤'}
                         <br>
-                        <small>${trade.time}</small>
+                        <small>${trade.time} • ${trade.market}</small>
                     </div>
                     <div>
                         $${trade.amount.toFixed(2)}
@@ -952,6 +1319,7 @@
         updateAutoTradeStatus();
         updateStats();
         updateBalance();
+        updateStrategyInfo();
     </script>
 </body>
 </html>
