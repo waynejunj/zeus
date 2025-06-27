@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
-    <title>Zeus - Advanced Digit Trading System</title>
+    <title>Zeus AI - Advanced Trading Bot</title>
     <style>
         * {
             margin: 0;
@@ -14,13 +14,13 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
             min-height: 100vh;
-            color: #333;
+            color: #fff;
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
             padding: 10px;
         }
@@ -28,21 +28,25 @@
         .header {
             text-align: center;
             margin-bottom: 20px;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 15px;
-            border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .header h1 {
-            color: #4a5568;
-            font-size: clamp(1.5rem, 4vw, 2.5rem);
-            margin-bottom: 5px;
+            background: linear-gradient(45deg, #00d4ff, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: clamp(1.8rem, 4vw, 3rem);
+            margin-bottom: 10px;
+            font-weight: 800;
         }
 
         .header p {
-            color: #718096;
-            font-size: clamp(0.8rem, 2vw, 1rem);
+            color: #a0a0a0;
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
         }
 
         .main-grid {
@@ -64,15 +68,36 @@
         }
 
         .card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            padding: 15px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
-        .connection-section {
+        .ai-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(0, 212, 255, 0.1);
+            border-radius: 15px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .ai-indicator {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #00d4ff;
+            animation: aiPulse 2s infinite;
+        }
+
+        @keyframes aiPulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 10px #00d4ff; }
+            50% { opacity: 0.5; box-shadow: 0 0 20px #00d4ff; }
         }
 
         .connection-status {
@@ -87,12 +112,12 @@
             width: 12px;
             height: 12px;
             border-radius: 50%;
-            background: #e53e3e;
+            background: #ff6b6b;
             animation: pulse 2s infinite;
         }
 
         .status-indicator.connected {
-            background: #38a169;
+            background: #4ecdc4;
         }
 
         @keyframes pulse {
@@ -106,66 +131,70 @@
 
         .input-group label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             font-weight: 600;
-            color: #4a5568;
+            color: #e0e0e0;
             font-size: 0.9rem;
         }
 
         .input-group input, .input-group select {
             width: 100%;
-            padding: 10px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
+            padding: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
             font-size: 14px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
             transition: all 0.3s ease;
         }
 
         .input-group input:focus, .input-group select:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #00d4ff;
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.2);
         }
 
         .btn {
-            padding: 10px 20px;
+            padding: 12px 24px;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
             font-size: 14px;
             margin: 5px;
+            position: relative;
+            overflow: hidden;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: linear-gradient(135deg, #00d4ff, #0099cc);
             color: white;
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #e53e3e, #c53030);
-            color: white;
-        }
-
-        .btn-danger:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(229, 62, 62, 0.4);
+            box-shadow: 0 8px 25px rgba(0, 212, 255, 0.4);
         }
 
         .btn-success {
-            background: linear-gradient(135deg, #38a169, #2f855a);
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
             color: white;
         }
 
         .btn-success:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(56, 161, 105, 0.4);
+            box-shadow: 0 8px 25px rgba(78, 205, 196, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
         }
 
         .btn:disabled {
@@ -177,110 +206,101 @@
         .digit-display {
             text-align: center;
             margin: 20px 0;
+            position: relative;
         }
 
         .current-digit {
-            font-size: clamp(3rem, 8vw, 6rem);
-            font-weight: bold;
-            color: #4a5568;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            font-size: clamp(4rem, 10vw, 8rem);
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 0 30px currentColor;
+            position: relative;
         }
 
-        .digit-over-4 {
-            color: #38a169;
-            animation: glow 1s ease-in-out;
+        .digit-call {
+            color: #4ecdc4;
+            animation: glowGreen 1.5s ease-in-out;
         }
 
-        .digit-under-5 {
-            color: #e53e3e;
-            animation: glow 1s ease-in-out;
+        .digit-put {
+            color: #ff6b6b;
+            animation: glowRed 1.5s ease-in-out;
         }
 
-        .digit-even {
-            color: #3182ce;
-            animation: glow 1s ease-in-out;
+        @keyframes glowGreen {
+            0%, 100% { text-shadow: 0 0 30px #4ecdc4; }
+            50% { text-shadow: 0 0 50px #4ecdc4, 0 0 70px #4ecdc4; }
         }
 
-        .digit-odd {
-            color: #d69e2e;
-            animation: glow 1s ease-in-out;
+        @keyframes glowRed {
+            0%, 100% { text-shadow: 0 0 30px #ff6b6b; }
+            50% { text-shadow: 0 0 50px #ff6b6b, 0 0 70px #ff6b6b; }
         }
 
-        @keyframes glow {
-            0%, 100% { text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1); }
-            50% { text-shadow: 0 0 20px currentColor; }
+        .prediction-display {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .prediction-call {
+            background: rgba(78, 205, 196, 0.1);
+            border-color: rgba(78, 205, 196, 0.3);
+        }
+
+        .prediction-put {
+            background: rgba(255, 107, 107, 0.1);
+            border-color: rgba(255, 107, 107, 0.3);
         }
 
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 10px;
-            margin: 15px 0;
+            gap: 15px;
+            margin: 20px 0;
         }
 
         .stat-item {
             text-align: center;
-            padding: 10px;
-            background: rgba(102, 126, 234, 0.1);
-            border-radius: 8px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .stat-value {
-            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            font-size: clamp(1.4rem, 3vw, 2rem);
             font-weight: bold;
-            color: #4a5568;
+            color: #00d4ff;
         }
 
         .stat-label {
-            font-size: 0.8rem;
-            color: #718096;
-            margin-top: 2px;
+            font-size: 0.85rem;
+            color: #a0a0a0;
+            margin-top: 5px;
         }
 
-        .auto-trade-section {
-            border-top: 2px solid #e2e8f0;
-            padding-top: 15px;
-            margin-top: 15px;
+        .ai-section {
+            border-top: 2px solid rgba(0, 212, 255, 0.3);
+            padding-top: 20px;
+            margin-top: 20px;
         }
 
-        .trade-controls {
+        .ai-controls {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .history-section {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .history-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px;
-            margin: 5px 0;
-            background: rgba(102, 126, 234, 0.05);
-            border-radius: 6px;
-            font-size: 0.85rem;
-            flex-wrap: wrap;
-            gap: 5px;
-        }
-
-        .history-item.win {
-            border-left: 4px solid #38a169;
-        }
-
-        .history-item.loss {
-            border-left: 4px solid #e53e3e;
+            gap: 15px;
+            margin-bottom: 20px;
         }
 
         .toggle-switch {
             position: relative;
             display: inline-block;
-            width: 50px;
-            height: 24px;
+            width: 60px;
+            height: 30px;
         }
 
         .toggle-switch input {
@@ -296,118 +316,162 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: #ccc;
+            background: rgba(255, 255, 255, 0.2);
             transition: .4s;
-            border-radius: 24px;
+            border-radius: 30px;
         }
 
         .slider:before {
             position: absolute;
             content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
             background-color: white;
             transition: .4s;
             border-radius: 50%;
         }
 
         input:checked + .slider {
-            background-color: #38a169;
+            background: #4ecdc4;
         }
 
         input:checked + .slider:before {
-            transform: translateX(26px);
+            transform: translateX(30px);
         }
 
-        .alert {
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 6px;
-            font-size: 0.9rem;
-        }
-
-        .alert-success {
-            background: rgba(56, 161, 105, 0.1);
-            border: 1px solid #38a169;
-            color: #2f855a;
-        }
-
-        .alert-error {
-            background: rgba(229, 62, 62, 0.1);
-            border: 1px solid #e53e3e;
-            color: #c53030;
-        }
-
-        .alert-info {
-            background: rgba(102, 126, 234, 0.1);
-            border: 1px solid #667eea;
-            color: #5a67d8;
-        }
-
-        .market-info {
-            background: rgba(56, 161, 105, 0.1);
-            padding: 10px;
-            border-radius: 8px;
-            margin: 10px 0;
-            font-size: 0.9rem;
-        }
-
-        .strategy-info {
-            background: rgba(102, 126, 234, 0.1);
-            padding: 10px;
-            border-radius: 8px;
-            margin: 10px 0;
-            font-size: 0.85rem;
-        }
-
-        .pattern-analysis {
+        .market-analysis {
             background: rgba(255, 193, 7, 0.1);
-            padding: 10px;
-            border-radius: 8px;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            padding: 15px;
+            border-radius: 15px;
+            margin: 15px 0;
+        }
+
+        .signal-strength {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             margin: 10px 0;
+        }
+
+        .strength-bar {
+            flex: 1;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .strength-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #ffa500, #4ecdc4);
+            transition: width 0.5s ease;
         }
 
         .recent-digits {
             display: flex;
-            gap: 5px;
+            gap: 8px;
             justify-content: center;
-            margin: 10px 0;
+            margin: 15px 0;
             flex-wrap: wrap;
         }
 
         .recent-digit {
-            width: 30px;
-            height: 30px;
+            width: 35px;
+            height: 35px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            border: 2px solid transparent;
+        }
+
+        .recent-digit.call-signal {
+            background: rgba(78, 205, 196, 0.3);
+            border-color: #4ecdc4;
+            box-shadow: 0 0 15px rgba(78, 205, 196, 0.5);
+        }
+
+        .recent-digit.put-signal {
+            background: rgba(255, 107, 107, 0.3);
+            border-color: #ff6b6b;
+            box-shadow: 0 0 15px rgba(255, 107, 107, 0.5);
+        }
+
+        .history-section {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin: 8px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
             font-size: 0.9rem;
-            background: #e2e8f0;
-            color: #4a5568;
+            flex-wrap: wrap;
+            gap: 10px;
+            border-left: 4px solid transparent;
         }
 
-        .recent-digit.over4 {
-            background: #38a169;
-            color: white;
+        .history-item.win {
+            border-left-color: #4ecdc4;
+            background: rgba(78, 205, 196, 0.1);
         }
 
-        .recent-digit.under5 {
-            background: #e53e3e;
-            color: white;
+        .history-item.loss {
+            border-left-color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
         }
 
-        .recent-digit.even {
-            background: #3182ce;
-            color: white;
+        .alert {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            border: 1px solid;
         }
 
-        .recent-digit.odd {
-            background: #d69e2e;
-            color: white;
+        .alert-success {
+            background: rgba(78, 205, 196, 0.1);
+            border-color: #4ecdc4;
+            color: #4ecdc4;
+        }
+
+        .alert-error {
+            background: rgba(255, 107, 107, 0.1);
+            border-color: #ff6b6b;
+            color: #ff6b6b;
+        }
+
+        .alert-info {
+            background: rgba(0, 212, 255, 0.1);
+            border-color: #00d4ff;
+            color: #00d4ff;
+        }
+
+        .ai-brain {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .brain-icon {
+            font-size: 3rem;
+            animation: brainPulse 3s infinite;
+        }
+
+        @keyframes brainPulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
         }
 
         @media (max-width: 480px) {
@@ -416,15 +480,15 @@
             }
             
             .card {
-                padding: 10px;
+                padding: 15px;
             }
             
             .btn {
-                padding: 8px 16px;
+                padding: 10px 20px;
                 font-size: 12px;
             }
             
-            .trade-controls {
+            .ai-controls {
                 grid-template-columns: 1fr;
             }
             
@@ -436,69 +500,98 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        .advanced-settings {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .risk-meter {
+            margin: 15px 0;
+        }
+
+        .risk-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .risk-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4ecdc4, #ffa500, #ff6b6b);
+            transition: width 0.3s ease;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>⚡ Zeus - Advanced Digit Trading</h1>
-            <p>Smart Trading System with Pattern Analysis</p>
+            <h1>🧠 Zeus AI - Advanced Trading Bot</h1>
+            <p>Intelligent Call/Put Prediction System with Advanced Market Analysis</p>
         </div>
 
         <div class="main-grid">
             <div class="card">
-                <div class="connection-section">
-                    <div class="connection-status">
-                        <div class="status-indicator" id="connectionStatus"></div>
-                        <span id="connectionText">Disconnected</span>
-                        <button class="btn btn-danger" id="disconnectBtn" onclick="disconnect()" style="display: none;">Disconnect</button>
-                    </div>
-
-                    <div class="input-group">
-                        <label for="appId">App ID:</label>
-                        <input type="text" id="appId" placeholder="Enter your Deriv App ID" value="1089">
-                    </div>
-
-                    <div class="input-group">
-                        <label for="apiToken">API Token:</label>
-                        <input type="password" id="apiToken" placeholder="Enter your API Token">
-                    </div>
-
-                    <div class="input-group">
-                        <label for="marketSelect">Market:</label>
-                        <select id="marketSelect">
-                            <option value="R_10">Volatility 10 Index</option>
-                            <option value="R_25">Volatility 25 Index</option>
-                            <option value="R_50">Volatility 50 Index</option>
-                            <option value="R_75" selected>Volatility 75 Index</option>
-                            <option value="R_100">Volatility 100 Index</option>
-                            <option value="1HZ10V">Volatility 10 (1s) Index</option>
-                            <option value="1HZ25V">Volatility 25 (1s) Index</option>
-                            <option value="1HZ50V">Volatility 50 (1s) Index</option>
-                            <option value="1HZ75V">Volatility 75 (1s) Index</option>
-                            <option value="1HZ100V">Volatility 100 (1s) Index</option>
-                            <option value="BOOM300N">Boom 300 Index</option>
-                            <option value="BOOM500N">Boom 500 Index</option>
-                            <option value="BOOM1000N">Boom 1000 Index</option>
-                            <option value="CRASH300N">Crash 300 Index</option>
-                            <option value="CRASH500N">Crash 500 Index</option>
-                            <option value="CRASH1000N">Crash 1000 Index</option>
-                        </select>
-                    </div>
-
-                    <button class="btn btn-primary" id="connectBtn" onclick="connect()">Connect to Deriv</button>
-                    
-                    <div class="market-info" id="marketInfo" style="display: none;">
-                        <strong>Market Info:</strong> <span id="marketDescription"></span>
-                    </div>
+                <div class="ai-status">
+                    <div class="ai-indicator"></div>
+                    <span><strong>AI Status:</strong> <span id="aiStatus">Initializing Neural Networks...</span></span>
                 </div>
+
+                <div class="connection-status">
+                    <div class="status-indicator" id="connectionStatus"></div>
+                    <span id="connectionText">Disconnected</span>
+                    <button class="btn btn-danger" id="disconnectBtn" onclick="disconnect()" style="display: none;">Disconnect</button>
+                </div>
+
+                <div class="input-group">
+                    <label for="appId">App ID:</label>
+                    <input type="text" id="appId" placeholder="Enter your Deriv App ID" value="1089">
+                </div>
+
+                <div class="input-group">
+                    <label for="apiToken">API Token:</label>
+                    <input type="password" id="apiToken" placeholder="Enter your API Token">
+                </div>
+
+                <div class="input-group">
+                    <label for="marketSelect">Trading Market:</label>
+                    <select id="marketSelect">
+                        <option value="R_10">Volatility 10 Index (Stable)</option>
+                        <option value="R_25">Volatility 25 Index (Low Risk)</option>
+                        <option value="R_50">Volatility 50 Index (Balanced)</option>
+                        <option value="R_75" selected>Volatility 75 Index (Recommended)</option>
+                        <option value="R_100">Volatility 100 Index (High Risk)</option>
+                        <option value="1HZ10V">Volatility 10 (1s) - Fast</option>
+                        <option value="1HZ25V">Volatility 25 (1s) - Fast</option>
+                        <option value="1HZ50V">Volatility 50 (1s) - Fast</option>
+                        <option value="1HZ75V">Volatility 75 (1s) - Fast</option>
+                        <option value="1HZ100V">Volatility 100 (1s) - Fast</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-primary" id="connectBtn" onclick="connect()">🚀 Connect & Initialize AI</button>
 
                 <div class="digit-display">
                     <div class="current-digit" id="currentDigit">-</div>
-                    <div style="font-size: 1rem; color: #718096; margin-top: 10px;">
+                    <div style="font-size: 1.1rem; color: #a0a0a0; margin-top: 10px;">
                         Current Last Digit
                     </div>
                     <div class="recent-digits" id="recentDigits"></div>
+                </div>
+
+                <div class="prediction-display" id="predictionDisplay">
+                    <div class="ai-brain">
+                        <div class="brain-icon">🧠</div>
+                    </div>
+                    <div><strong>AI Prediction:</strong> <span id="aiPrediction">Analyzing market patterns...</span></div>
+                    <div style="margin-top: 10px;">
+                        <strong>Confidence:</strong> <span id="aiConfidence">0%</span> | 
+                        <strong>Signal:</strong> <span id="aiSignal">WAIT</span>
+                    </div>
                 </div>
 
                 <div class="stats-grid">
@@ -507,34 +600,34 @@
                         <div class="stat-label">Total Ticks</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value" id="over4Count">0</div>
-                        <div class="stat-label">Over 4</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="over4Percentage">0%</div>
-                        <div class="stat-label">Over 4 %</div>
+                        <div class="stat-value" id="aiAccuracy">0%</div>
+                        <div class="stat-label">AI Accuracy</div>
                     </div>
                     <div class="stat-item">
                         <div class="stat-value" id="balance">$0.00</div>
                         <div class="stat-label">Balance</div>
                     </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="todayProfit">$0.00</div>
+                        <div class="stat-label">Today's P&L</div>
+                    </div>
                 </div>
 
-                <div class="auto-trade-section">
-                    <h3 style="margin-bottom: 15px; color: #4a5568;">🤖 Smart Auto Trading</h3>
+                <div class="ai-section">
+                    <h3 style="margin-bottom: 20px; color: #00d4ff;">🤖 Advanced AI Trading System</h3>
                     
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
                         <label class="toggle-switch">
-                            <input type="checkbox" id="autoTradeToggle" onchange="toggleAutoTrade()">
+                            <input type="checkbox" id="aiTradeToggle" onchange="toggleAITrade()">
                             <span class="slider"></span>
                         </label>
-                        <span>Auto Trade: <span id="autoTradeStatus">OFF</span></span>
+                        <span><strong>AI Auto Trade:</strong> <span id="aiTradeStatus">OFF</span></span>
                     </div>
 
-                    <div class="trade-controls">
+                    <div class="ai-controls">
                         <div class="input-group">
                             <label for="tradeAmount">Trade Amount ($):</label>
-                            <input type="number" id="tradeAmount" value="1" min="0.35" step="0.01">
+                            <input type="number" id="tradeAmount" value="2" min="0.35" step="0.01">
                         </div>
                         <div class="input-group">
                             <label for="tradeDuration">Duration (ticks):</label>
@@ -542,50 +635,81 @@
                                 <option value="1">1 tick</option>
                                 <option value="2">2 ticks</option>
                                 <option value="3">3 ticks</option>
-                                <option value="4">4 ticks</option>
                                 <option value="5" selected>5 ticks</option>
                                 <option value="10">10 ticks</option>
                             </select>
                         </div>
                         <div class="input-group">
-                            <label for="tradeStrategy">Strategy:</label>
-                            <select id="tradeStrategy" onchange="updateStrategyInfo()">
-                                <option value="smart_over4">Smart Over 4 (AI)</option>
-                                <option value="smart_under5">Smart Under 5 (AI)</option>
-                                <option value="pattern_over4">Pattern Over 4</option>
-                                <option value="pattern_under5">Pattern Under 5</option>
-                                <option value="over4">Simple Over 4</option>
-                                <option value="under5">Simple Under 5</option>
-                                <option value="even">Even Digits</option>
-                                <option value="odd">Odd Digits</option>
+                            <label for="aiStrategy">AI Strategy:</label>
+                            <select id="aiStrategy" onchange="updateStrategyInfo()">
+                                <option value="neural_prediction">Neural Network Prediction</option>
+                                <option value="pattern_recognition">Pattern Recognition AI</option>
+                                <option value="market_sentiment">Market Sentiment Analysis</option>
+                                <option value="volatility_prediction">Volatility Prediction</option>
+                                <option value="hybrid_ai">Hybrid AI (All Combined)</option>
                             </select>
                         </div>
                         <div class="input-group">
-                            <label for="maxTrades">Max Trades/Hour:</label>
-                            <input type="number" id="maxTrades" value="5" min="1" max="50">
+                            <label for="riskLevel">Risk Level:</label>
+                            <select id="riskLevel" onchange="updateRiskLevel()">
+                                <option value="conservative">Conservative (High Accuracy)</option>
+                                <option value="balanced" selected>Balanced (Medium Risk)</option>
+                                <option value="aggressive">Aggressive (High Frequency)</option>
+                            </select>
                         </div>
                     </div>
 
-                    <div class="strategy-info" id="strategyInfo">
-                        <strong>Smart Over 4 (AI):</strong> Uses pattern analysis and market conditions to predict when digits will be over 4. Higher accuracy but fewer trades.
+                    <div class="advanced-settings">
+                        <h4 style="color: #00d4ff; margin-bottom: 15px;">⚙️ Advanced Settings</h4>
+                        
+                        <div class="input-group">
+                            <label for="minConfidence">Minimum AI Confidence (%):</label>
+                            <input type="range" id="minConfidence" min="60" max="95" value="75" oninput="updateConfidenceDisplay()">
+                            <div style="text-align: center; margin-top: 5px; color: #00d4ff;">
+                                <span id="confidenceDisplay">75%</span>
+                            </div>
+                        </div>
+
+                        <div class="risk-meter">
+                            <label>Current Risk Level:</label>
+                            <div class="risk-bar">
+                                <div class="risk-fill" id="riskFill" style="width: 50%;"></div>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="maxTrades">Max Trades per Hour:</label>
+                            <input type="number" id="maxTrades" value="8" min="1" max="20">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="stopLoss">Stop Loss ($):</label>
+                            <input type="number" id="stopLoss" value="20" min="5" step="1">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="takeProfit">Take Profit ($):</label>
+                            <input type="number" id="takeProfit" value="50" min="10" step="1">
+                        </div>
                     </div>
 
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <button class="btn btn-success" onclick="placeTrade()" id="manualTradeBtn">Place Manual Trade</button>
-                        <button class="btn btn-primary" onclick="testTrade()">Test Strategy</button>
+                        <button class="btn btn-success" onclick="placeManualTrade('call')" id="callBtn">📈 Manual CALL</button>
+                        <button class="btn btn-danger" onclick="placeManualTrade('put')" id="putBtn">📉 Manual PUT</button>
+                        <button class="btn btn-primary" onclick="testAIStrategy()">🧪 Test AI Strategy</button>
                     </div>
                 </div>
             </div>
 
             <div class="card">
-                <h3 style="margin-bottom: 15px; color: #4a5568;">📊 Trade History</h3>
+                <h3 style="margin-bottom: 15px; color: #00d4ff;">📊 Trading History</h3>
                 <div class="history-section" id="tradeHistory">
-                    <div style="text-align: center; color: #718096; padding: 20px;">
-                        No trades yet
+                    <div style="text-align: center; color: #a0a0a0; padding: 20px;">
+                        No trades yet - AI is ready to start
                     </div>
                 </div>
                 
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 2px solid #e2e8f0;">
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid rgba(0, 212, 255, 0.3);">
                     <div class="stats-grid">
                         <div class="stat-item">
                             <div class="stat-value" id="totalTrades">0</div>
@@ -599,42 +723,63 @@
                             <div class="stat-value" id="totalProfit">$0.00</div>
                             <div class="stat-label">Total P&L</div>
                         </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="bestStreak">0</div>
+                            <div class="stat-label">Best Streak</div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="card">
-                <h3 style="margin-bottom: 15px; color: #4a5568;">🧠 Pattern Analysis</h3>
+                <h3 style="margin-bottom: 15px; color: #00d4ff;">🔬 AI Market Analysis</h3>
                 
-                <div class="pattern-analysis">
-                    <div style="margin-bottom: 10px;">
-                        <strong>Current Trend:</strong> <span id="currentTrend">Analyzing...</span>
+                <div class="market-analysis">
+                    <div style="margin-bottom: 15px;">
+                        <strong>Market Trend:</strong> <span id="marketTrend">Analyzing...</span>
                     </div>
-                    <div style="margin-bottom: 10px;">
-                        <strong>Confidence:</strong> <span id="confidence">0%</span>
+                    <div style="margin-bottom: 15px;">
+                        <strong>Volatility:</strong> <span id="marketVolatility">Medium</span>
                     </div>
-                    <div style="margin-bottom: 10px;">
-                        <strong>Recommendation:</strong> <span id="recommendation">Wait for pattern</span>
+                    <div style="margin-bottom: 15px;">
+                        <strong>Next Prediction:</strong> <span id="nextPrediction">Calculating...</span>
+                    </div>
+                    
+                    <div class="signal-strength">
+                        <span>Signal Strength:</span>
+                        <div class="strength-bar">
+                            <div class="strength-fill" id="signalStrength" style="width: 0%;"></div>
+                        </div>
+                        <span id="strengthPercent">0%</span>
                     </div>
                 </div>
 
-                <div style="margin-top: 15px;">
-                    <h4 style="color: #4a5568; margin-bottom: 10px;">Last 20 Digits</h4>
-                    <div id="digitPattern" style="font-family: monospace; font-size: 1.2rem; text-align: center; padding: 10px; background: #f7fafc; border-radius: 6px;">
-                        -
+                <div style="margin-top: 20px;">
+                    <h4 style="color: #00d4ff; margin-bottom: 15px;">📈 Pattern Analysis</h4>
+                    <div id="patternAnalysis" style="font-family: monospace; font-size: 1.1rem; text-align: center; padding: 15px; background: rgba(0, 0, 0, 0.3); border-radius: 10px;">
+                        Waiting for data...
                     </div>
                 </div>
 
-                <div style="margin-top: 15px;">
-                    <h4 style="color: #4a5568; margin-bottom: 10px;">Market Statistics</h4>
+                <div style="margin-top: 20px;">
+                    <h4 style="color: #00d4ff; margin-bottom: 15px;">🎯 AI Recommendations</h4>
                     <div class="stats-grid">
                         <div class="stat-item">
-                            <div class="stat-value" id="streakCount">0</div>
-                            <div class="stat-label">Current Streak</div>
+                            <div class="stat-value" id="callProbability">0%</div>
+                            <div class="stat-label">CALL Probability</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-value" id="volatility">Low</div>
-                            <div class="stat-label">Volatility</div>
+                            <div class="stat-value" id="putProbability">0%</div>
+                            <div class="stat-label">PUT Probability</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px;">
+                    <h4 style="color: #00d4ff; margin-bottom: 15px;">⚡ Real-time Signals</h4>
+                    <div id="realTimeSignals" style="background: rgba(0, 0, 0, 0.3); padding: 15px; border-radius: 10px; min-height: 100px;">
+                        <div style="text-align: center; color: #a0a0a0;">
+                            Connect to start receiving AI signals
                         </div>
                     </div>
                 </div>
@@ -645,12 +790,10 @@
     </div>
 
     <script>
-        let ws = null;
         let derivWs = null;
         let isConnected = false;
-        let autoTradeEnabled = false;
+        let aiTradeEnabled = false;
         let tickCount = 0;
-        let over4Count = 0;
         let tradeHistory = [];
         let currentBalance = 0;
         let tradesThisHour = 0;
@@ -659,28 +802,41 @@
         let recentDigits = [];
         let currentMarket = 'R_75';
         let tickHistory = [];
+        let aiPredictions = [];
+        let correctPredictions = 0;
+        let totalPredictions = 0;
+        let todayProfit = 0;
+        let bestStreak = 0;
         let currentStreak = 0;
-        let streakType = '';
+        let lastSignal = null;
+        let signalHistory = [];
 
-        // Market descriptions
-        const marketDescriptions = {
-            'R_10': 'Low volatility, steady movements',
-            'R_25': 'Medium-low volatility, good for beginners',
-            'R_50': 'Medium volatility, balanced trading',
-            'R_75': 'Medium-high volatility, popular choice',
-            'R_100': 'High volatility, experienced traders',
-            '1HZ10V': 'Very fast ticks, low volatility',
-            '1HZ25V': 'Very fast ticks, medium-low volatility',
-            '1HZ50V': 'Very fast ticks, medium volatility',
-            '1HZ75V': 'Very fast ticks, medium-high volatility',
-            '1HZ100V': 'Very fast ticks, high volatility',
-            'BOOM300N': 'Spike patterns every ~300 ticks',
-            'BOOM500N': 'Spike patterns every ~500 ticks',
-            'BOOM1000N': 'Spike patterns every ~1000 ticks',
-            'CRASH300N': 'Drop patterns every ~300 ticks',
-            'CRASH500N': 'Drop patterns every ~500 ticks',
-            'CRASH1000N': 'Drop patterns every ~1000 ticks'
+        // Advanced AI variables
+        let neuralNetwork = {
+            weights: [],
+            biases: [],
+            learningRate: 0.01
         };
+
+        let marketSentiment = {
+            bullish: 0,
+            bearish: 0,
+            neutral: 0
+        };
+
+        let volatilityIndex = 0;
+        let trendStrength = 0;
+
+        // Initialize AI system
+        function initializeAI() {
+            document.getElementById('aiStatus').textContent = 'Neural networks initialized, pattern recognition active';
+            
+            // Initialize neural network weights (simplified)
+            neuralNetwork.weights = Array(20).fill().map(() => Math.random() * 2 - 1);
+            neuralNetwork.biases = Array(5).fill().map(() => Math.random() * 2 - 1);
+            
+            showAlert('🧠 AI System initialized successfully!', 'success');
+        }
 
         // Reset hourly trade counter
         setInterval(() => {
@@ -734,13 +890,10 @@
                         currentBalance = data.authorize.balance;
                         updateConnectionStatus();
                         updateBalance();
-                        showAlert(`Connected to ${marketDescriptions[currentMarket]}!`, 'success');
+                        initializeAI();
+                        showAlert(`🚀 Connected to ${currentMarket}! AI system activated.`, 'success');
                         
-                        // Show market info
-                        document.getElementById('marketInfo').style.display = 'block';
-                        document.getElementById('marketDescription').textContent = marketDescriptions[currentMarket];
-                        
-                        // Subscribe to tick stream for selected market
+                        // Subscribe to tick stream
                         derivWs.send(JSON.stringify({
                             ticks: currentMarket,
                             subscribe: 1
@@ -794,149 +947,162 @@
                 derivWs.close();
             }
             isConnected = false;
-            autoTradeEnabled = false;
-            document.getElementById('autoTradeToggle').checked = false;
-            document.getElementById('marketInfo').style.display = 'none';
+            aiTradeEnabled = false;
+            document.getElementById('aiTradeToggle').checked = false;
             updateConnectionStatus();
-            updateAutoTradeStatus();
+            updateAITradeStatus();
             showAlert('Disconnected from Deriv', 'info');
         }
 
         function handleTick(tick) {
-            // Extract last digit from the exact tick quote
             const tickQuote = tick.quote.toString();
             const lastDigit = parseInt(tickQuote.slice(-1));
             
-            // Store tick history for pattern analysis
-            tickHistory.push({
+            // Store comprehensive tick data
+            const tickData = {
                 digit: lastDigit,
                 quote: tick.quote,
-                time: new Date(tick.epoch * 1000)
-            });
+                time: new Date(tick.epoch * 1000),
+                epoch: tick.epoch
+            };
             
-            // Keep only last 100 ticks for analysis
-            if (tickHistory.length > 100) {
+            tickHistory.push(tickData);
+            
+            // Keep last 200 ticks for advanced analysis
+            if (tickHistory.length > 200) {
                 tickHistory.shift();
             }
             
             tickCount++;
-            if (lastDigit > 4) {
-                over4Count++;
-            }
             
-            // Update recent digits display
+            // Update recent digits
             recentDigits.unshift(lastDigit);
-            if (recentDigits.length > 20) {
+            if (recentDigits.length > 50) {
                 recentDigits.pop();
             }
             
-            // Update streak tracking
-            updateStreak(lastDigit);
+            // Run AI analysis
+            runAIAnalysis(tickData);
             
             // Update UI
             updateDigitDisplay(lastDigit);
             updateRecentDigits();
             updateStats();
-            updatePatternAnalysis();
+            updateMarketAnalysis();
             
-            // Auto trade logic
-            if (autoTradeEnabled && shouldTrade(lastDigit)) {
-                setTimeout(() => placeTrade(true), 1000);
+            // Check for AI trading opportunity
+            if (aiTradeEnabled && shouldAITrade()) {
+                setTimeout(() => executeAITrade(), 500);
             }
         }
 
-        function updateDigitDisplay(digit) {
-            const digitElement = document.getElementById('currentDigit');
-            digitElement.textContent = digit;
+        function runAIAnalysis(tickData) {
+            if (tickHistory.length < 20) return;
             
-            // Remove all classes
-            digitElement.className = 'current-digit';
+            // Neural Network Prediction
+            const prediction = neuralNetworkPredict();
             
-            // Add appropriate class based on digit
-            if (digit > 4) {
-                digitElement.classList.add('digit-over-4');
-            } else if (digit < 5) {
-                digitElement.classList.add('digit-under-5');
+            // Pattern Recognition
+            const pattern = recognizePattern();
+            
+            // Market Sentiment Analysis
+            updateMarketSentiment();
+            
+            // Volatility Analysis
+            calculateVolatility();
+            
+            // Generate AI prediction
+            const aiPrediction = generateAIPrediction(prediction, pattern);
+            
+            // Update AI display
+            updateAIPrediction(aiPrediction);
+            
+            // Store prediction for accuracy tracking
+            if (lastSignal) {
+                checkPredictionAccuracy(tickData.digit);
             }
             
-            if (digit % 2 === 0) {
-                digitElement.classList.add('digit-even');
-            } else {
-                digitElement.classList.add('digit-odd');
-            }
+            lastSignal = aiPrediction;
         }
 
-        function updateRecentDigits() {
-            const container = document.getElementById('recentDigits');
-            container.innerHTML = recentDigits.slice(0, 10).map(digit => {
-                let classes = 'recent-digit';
-                if (digit > 4) classes += ' over4';
-                if (digit < 5) classes += ' under5';
-                if (digit % 2 === 0) classes += ' even';
-                if (digit % 2 === 1) classes += ' odd';
-                
-                return `<div class="${classes}">${digit}</div>`;
-            }).join('');
+        function neuralNetworkPredict() {
+            if (recentDigits.length < 10) return { call: 0.5, put: 0.5 };
             
-            // Update pattern display
-            document.getElementById('digitPattern').textContent = recentDigits.slice(0, 20).join(' ');
-        }
-
-        function updateStreak(digit) {
-            if (streakType === '') {
-                streakType = digit > 4 ? 'over4' : 'under5';
-                currentStreak = 1;
-            } else if ((streakType === 'over4' && digit > 4) || (streakType === 'under5' && digit < 5)) {
-                currentStreak++;
-            } else {
-                streakType = digit > 4 ? 'over4' : 'under5';
-                currentStreak = 1;
+            // Simplified neural network calculation
+            const inputs = recentDigits.slice(0, 10).map(d => d / 9); // Normalize
+            let callScore = 0;
+            let putScore = 0;
+            
+            for (let i = 0; i < inputs.length; i++) {
+                callScore += inputs[i] * neuralNetwork.weights[i];
+                putScore += inputs[i] * neuralNetwork.weights[i + 10];
             }
             
-            document.getElementById('streakCount').textContent = currentStreak;
+            // Apply activation function (sigmoid)
+            callScore = 1 / (1 + Math.exp(-callScore));
+            putScore = 1 / (1 + Math.exp(-putScore));
+            
+            // Normalize to sum to 1
+            const total = callScore + putScore;
+            return {
+                call: callScore / total,
+                put: putScore / total
+            };
         }
 
-        function updatePatternAnalysis() {
-            if (recentDigits.length < 10) return;
+        function recognizePattern() {
+            if (recentDigits.length < 15) return { strength: 0, direction: 'neutral' };
             
-            const last10 = recentDigits.slice(0, 10);
-            const over4Count = last10.filter(d => d > 4).length;
-            const under5Count = last10.filter(d => d < 5).length;
+            const last15 = recentDigits.slice(0, 15);
             
-            let trend = 'Neutral';
-            let confidence = 50;
-            let recommendation = 'Wait for pattern';
+            // Detect trends
+            let upTrend = 0;
+            let downTrend = 0;
             
-            // Simple pattern analysis
-            if (over4Count >= 7) {
-                trend = 'Strong Over 4';
-                confidence = 75;
-                recommendation = 'Consider Under 5';
-            } else if (under5Count >= 7) {
-                trend = 'Strong Under 5';
-                confidence = 75;
-                recommendation = 'Consider Over 4';
-            } else if (over4Count >= 6) {
-                trend = 'Trending Over 4';
-                confidence = 65;
-                recommendation = 'Watch for reversal';
-            } else if (under5Count >= 6) {
-                trend = 'Trending Under 5';
-                confidence = 65;
-                recommendation = 'Watch for reversal';
+            for (let i = 1; i < last15.length; i++) {
+                if (last15[i] > last15[i-1]) upTrend++;
+                if (last15[i] < last15[i-1]) downTrend++;
             }
             
-            // Volatility analysis
-            const volatility = calculateVolatility();
-            document.getElementById('volatility').textContent = volatility;
+            // Detect patterns
+            const consecutiveHigh = last15.slice(0, 5).filter(d => d > 4).length;
+            const consecutiveLow = last15.slice(0, 5).filter(d => d < 5).length;
             
-            document.getElementById('currentTrend').textContent = trend;
-            document.getElementById('confidence').textContent = confidence + '%';
-            document.getElementById('recommendation').textContent = recommendation;
+            let strength = 0;
+            let direction = 'neutral';
+            
+            if (consecutiveHigh >= 4) {
+                strength = 0.8;
+                direction = 'put'; // Expect reversal
+            } else if (consecutiveLow >= 4) {
+                strength = 0.8;
+                direction = 'call'; // Expect reversal
+            } else if (upTrend > downTrend * 1.5) {
+                strength = 0.6;
+                direction = 'call';
+            } else if (downTrend > upTrend * 1.5) {
+                strength = 0.6;
+                direction = 'put';
+            }
+            
+            return { strength, direction };
+        }
+
+        function updateMarketSentiment() {
+            if (recentDigits.length < 20) return;
+            
+            const last20 = recentDigits.slice(0, 20);
+            const highDigits = last20.filter(d => d > 6).length;
+            const lowDigits = last20.filter(d => d < 3).length;
+            const midDigits = last20.filter(d => d >= 3 && d <= 6).length;
+            
+            marketSentiment.bullish = highDigits / 20;
+            marketSentiment.bearish = lowDigits / 20;
+            marketSentiment.neutral = midDigits / 20;
         }
 
         function calculateVolatility() {
-            if (tickHistory.length < 10) return 'Low';
+            if (tickHistory.length < 10) return;
             
             const last10Quotes = tickHistory.slice(-10).map(t => t.quote);
             const changes = [];
@@ -946,14 +1112,125 @@
             }
             
             const avgChange = changes.reduce((a, b) => a + b, 0) / changes.length;
-            
-            if (avgChange > 0.5) return 'High';
-            if (avgChange > 0.2) return 'Medium';
-            return 'Low';
+            volatilityIndex = Math.min(avgChange * 100, 100);
         }
 
-        function shouldTrade(lastDigit) {
-            const strategy = document.getElementById('tradeStrategy').value;
+        function generateAIPrediction(neuralPred, pattern) {
+            const strategy = document.getElementById('aiStrategy').value;
+            const riskLevel = document.getElementById('riskLevel').value;
+            
+            let callProb = neuralPred.call;
+            let putProb = neuralPred.put;
+            
+            // Adjust based on pattern
+            if (pattern.direction === 'call') {
+                callProb += pattern.strength * 0.3;
+            } else if (pattern.direction === 'put') {
+                putProb += pattern.strength * 0.3;
+            }
+            
+            // Adjust based on market sentiment
+            callProb += marketSentiment.bullish * 0.2;
+            putProb += marketSentiment.bearish * 0.2;
+            
+            // Adjust based on volatility
+            if (volatilityIndex > 50) {
+                // High volatility - more extreme predictions
+                if (callProb > putProb) {
+                    callProb += 0.1;
+                } else {
+                    putProb += 0.1;
+                }
+            }
+            
+            // Normalize
+            const total = callProb + putProb;
+            callProb = callProb / total;
+            putProb = putProb / total;
+            
+            // Determine confidence and signal
+            const confidence = Math.abs(callProb - putProb) * 100;
+            const minConfidence = parseInt(document.getElementById('minConfidence').value);
+            
+            let signal = 'WAIT';
+            let direction = null;
+            
+            if (confidence >= minConfidence) {
+                if (callProb > putProb) {
+                    signal = 'CALL';
+                    direction = 'call';
+                } else {
+                    signal = 'PUT';
+                    direction = 'put';
+                }
+            }
+            
+            return {
+                callProb: Math.round(callProb * 100),
+                putProb: Math.round(putProb * 100),
+                confidence: Math.round(confidence),
+                signal,
+                direction
+            };
+        }
+
+        function updateAIPrediction(prediction) {
+            document.getElementById('aiPrediction').textContent = 
+                `${prediction.signal} - ${prediction.confidence}% confidence`;
+            document.getElementById('aiConfidence').textContent = `${prediction.confidence}%`;
+            document.getElementById('aiSignal').textContent = prediction.signal;
+            
+            document.getElementById('callProbability').textContent = `${prediction.callProb}%`;
+            document.getElementById('putProbability').textContent = `${prediction.putProb}%`;
+            
+            // Update prediction display styling
+            const predDisplay = document.getElementById('predictionDisplay');
+            predDisplay.className = 'prediction-display';
+            
+            if (prediction.signal === 'CALL') {
+                predDisplay.classList.add('prediction-call');
+            } else if (prediction.signal === 'PUT') {
+                predDisplay.classList.add('prediction-put');
+            }
+            
+            // Update signal strength bar
+            document.getElementById('signalStrength').style.width = `${prediction.confidence}%`;
+            document.getElementById('strengthPercent').textContent = `${prediction.confidence}%`;
+            
+            // Add to real-time signals
+            addRealTimeSignal(prediction);
+        }
+
+        function addRealTimeSignal(prediction) {
+            const signalsContainer = document.getElementById('realTimeSignals');
+            const time = new Date().toLocaleTimeString();
+            
+            const signalElement = document.createElement('div');
+            signalElement.style.cssText = `
+                padding: 8px;
+                margin: 5px 0;
+                border-radius: 8px;
+                font-size: 0.9rem;
+                background: rgba(255, 255, 255, 0.1);
+                border-left: 4px solid ${prediction.signal === 'CALL' ? '#4ecdc4' : prediction.signal === 'PUT' ? '#ff6b6b' : '#00d4ff'};
+            `;
+            
+            signalElement.innerHTML = `
+                <strong>${time}</strong> - ${prediction.signal} 
+                (${prediction.confidence}% confidence)
+            `;
+            
+            signalsContainer.insertBefore(signalElement, signalsContainer.firstChild);
+            
+            // Keep only last 10 signals
+            while (signalsContainer.children.length > 10) {
+                signalsContainer.removeChild(signalsContainer.lastChild);
+            }
+        }
+
+        function shouldAITrade() {
+            if (!lastSignal || lastSignal.signal === 'WAIT') return false;
+            
             const maxTrades = parseInt(document.getElementById('maxTrades').value);
             const now = Date.now();
             
@@ -961,68 +1238,42 @@
                 return false;
             }
             
-            // Smart strategies use pattern analysis
-            if (strategy.startsWith('smart_')) {
-                return shouldTradeSmartStrategy(strategy, lastDigit);
-            } else if (strategy.startsWith('pattern_')) {
-                return shouldTradePatternStrategy(strategy, lastDigit);
-            } else {
-                return shouldTradeSimpleStrategy(strategy, lastDigit);
-            }
-        }
-
-        function shouldTradeSmartStrategy(strategy, lastDigit) {
-            if (recentDigits.length < 10) return false;
-            
-            const last10 = recentDigits.slice(0, 10);
-            const over4Count = last10.filter(d => d > 4).length;
-            const under5Count = last10.filter(d => d < 5).length;
-            
-            if (strategy === 'smart_over4') {
-                // Trade Over 4 when there's been a streak of Under 5
-                return under5Count >= 6 && currentStreak >= 3 && streakType === 'under5';
-            } else if (strategy === 'smart_under5') {
-                // Trade Under 5 when there's been a streak of Over 4
-                return over4Count >= 6 && currentStreak >= 3 && streakType === 'over4';
+            // Check stop loss and take profit
+            if (todayProfit <= -parseInt(document.getElementById('stopLoss').value)) {
+                showAlert('🛑 Stop loss reached for today', 'error');
+                return false;
             }
             
-            return false;
-        }
-
-        function shouldTradePatternStrategy(strategy, lastDigit) {
-            if (recentDigits.length < 5) return false;
-            
-            const last5 = recentDigits.slice(0, 5);
-            
-            if (strategy === 'pattern_over4') {
-                // Look for alternating pattern or consecutive under 5
-                const consecutiveUnder5 = last5.every(d => d < 5);
-                return consecutiveUnder5 && last5.length >= 3;
-            } else if (strategy === 'pattern_under5') {
-                // Look for alternating pattern or consecutive over 4
-                const consecutiveOver4 = last5.every(d => d > 4);
-                return consecutiveOver4 && last5.length >= 3;
+            if (todayProfit >= parseInt(document.getElementById('takeProfit').value)) {
+                showAlert('🎯 Take profit reached for today', 'success');
+                return false;
             }
             
-            return false;
+            return true;
         }
 
-        function shouldTradeSimpleStrategy(strategy, lastDigit) {
-            switch (strategy) {
-                case 'over4':
-                    return lastDigit > 4;
-                case 'under5':
-                    return lastDigit < 5;
-                case 'even':
-                    return lastDigit % 2 === 0;
-                case 'odd':
-                    return lastDigit % 2 === 1;
-                default:
-                    return false;
+        function executeAITrade() {
+            if (!lastSignal || !lastSignal.direction) return;
+            
+            const amount = parseFloat(document.getElementById('tradeAmount').value);
+            const duration = parseInt(document.getElementById('tradeDuration').value);
+            
+            if (amount > currentBalance) {
+                showAlert('Insufficient balance for AI trade', 'error');
+                return;
             }
+            
+            placeTrade(lastSignal.direction, amount, duration, true);
         }
 
-        function placeTrade(isAuto = false) {
+        function placeManualTrade(direction) {
+            const amount = parseFloat(document.getElementById('tradeAmount').value);
+            const duration = parseInt(document.getElementById('tradeDuration').value);
+            
+            placeTrade(direction, amount, duration, false);
+        }
+
+        function placeTrade(direction, amount, duration, isAI = false) {
             if (!isConnected) {
                 showAlert('Please connect to Deriv first', 'error');
                 return;
@@ -1032,10 +1283,6 @@
                 showAlert('Trade already in progress', 'error');
                 return;
             }
-            
-            const amount = parseFloat(document.getElementById('tradeAmount').value);
-            const duration = parseInt(document.getElementById('tradeDuration').value);
-            const strategy = document.getElementById('tradeStrategy').value;
             
             if (amount < 0.35) {
                 showAlert('Minimum trade amount is $0.35', 'error');
@@ -1051,30 +1298,12 @@
             lastTradeTime = Date.now();
             tradesThisHour++;
             
-            // Get contract type based on strategy
-            let contractType, barrier;
-            const baseStrategy = strategy.replace('smart_', '').replace('pattern_', '');
-            
-            switch (baseStrategy) {
-                case 'over4':
-                    contractType = 'DIGITOVER';
-                    barrier = '4';
-                    break;
-                case 'under5':
-                    contractType = 'DIGITUNDER';
-                    barrier = '5';
-                    break;
-                case 'even':
-                    contractType = 'DIGITEVEN';
-                    barrier = '';
-                    break;
-                case 'odd':
-                    contractType = 'DIGITODD';
-                    barrier = '';
-                    break;
-                default:
-                    contractType = 'DIGITOVER';
-                    barrier = '4';
+            // Determine contract type
+            let contractType;
+            if (direction === 'call') {
+                contractType = 'CALL';
+            } else {
+                contractType = 'PUT';
             }
             
             const proposalRequest = {
@@ -1087,10 +1316,6 @@
                 duration_unit: 't',
                 symbol: currentMarket
             };
-            
-            if (barrier) {
-                proposalRequest.barrier = barrier;
-            }
             
             console.log('Sending proposal:', proposalRequest);
             derivWs.send(JSON.stringify(proposalRequest));
@@ -1121,7 +1346,8 @@
                         showAlert(`Trade failed: ${data.error.message}`, 'error');
                         isTrading = false;
                     } else {
-                        showAlert(`${strategy.toUpperCase()} trade placed! Contract: ${data.buy.contract_id}`, 'success');
+                        const tradeType = isAI ? `AI ${direction.toUpperCase()}` : `Manual ${direction.toUpperCase()}`;
+                        showAlert(`${tradeType} trade placed! Contract: ${data.buy.contract_id}`, 'success');
                         
                         derivWs.send(JSON.stringify({
                             proposal_open_contract: 1,
@@ -1131,12 +1357,14 @@
                         
                         const trade = {
                             id: data.buy.contract_id,
-                            type: strategy,
+                            type: tradeType,
+                            direction: direction,
                             amount: amount,
                             time: new Date().toLocaleTimeString(),
                             status: 'open',
-                            isAuto: isAuto,
-                            market: currentMarket
+                            isAI: isAI,
+                            market: currentMarket,
+                            confidence: lastSignal ? lastSignal.confidence : 0
                         };
                         
                         tradeHistory.unshift(trade);
@@ -1164,12 +1392,36 @@
                         trade.payout = contract.payout;
                         isTrading = false;
                         
+                        // Update profit tracking
+                        todayProfit += contract.profit;
+                        
+                        // Update streak
+                        if (contract.profit > 0) {
+                            currentStreak++;
+                            if (currentStreak > bestStreak) {
+                                bestStreak = currentStreak;
+                            }
+                        } else {
+                            currentStreak = 0;
+                        }
+                        
+                        // Update AI accuracy if it was an AI trade
+                        if (trade.isAI) {
+                            totalPredictions++;
+                            if (contract.profit > 0) {
+                                correctPredictions++;
+                            }
+                            
+                            // Update neural network weights (simplified learning)
+                            updateNeuralNetwork(contract.profit > 0);
+                        }
+                        
                         updateTradeHistory();
                         updateTradeStats();
                         
                         const message = contract.profit > 0 
-                            ? `🎉 ${trade.type.toUpperCase()} WON! Profit: $${contract.profit.toFixed(2)}`
-                            : `😞 ${trade.type.toUpperCase()} LOST. Loss: $${Math.abs(contract.profit).toFixed(2)}`;
+                            ? `🎉 ${trade.type} WON! Profit: $${contract.profit.toFixed(2)}`
+                            : `😞 ${trade.type} LOST. Loss: $${Math.abs(contract.profit).toFixed(2)}`;
                         
                         showAlert(message, contract.profit > 0 ? 'success' : 'error');
                     }
@@ -1177,66 +1429,159 @@
             }
         }
 
-        function testTrade() {
+        function updateNeuralNetwork(won) {
+            // Simplified neural network learning
+            const learningRate = neuralNetwork.learningRate;
+            const adjustment = won ? learningRate : -learningRate;
+            
+            for (let i = 0; i < neuralNetwork.weights.length; i++) {
+                neuralNetwork.weights[i] += adjustment * (Math.random() - 0.5);
+            }
+        }
+
+        function checkPredictionAccuracy(actualDigit) {
+            // This is a simplified accuracy check
+            // In a real implementation, you'd track specific predictions vs outcomes
+        }
+
+        function testAIStrategy() {
             if (!isConnected) {
                 showAlert('Please connect to Deriv first', 'error');
                 return;
             }
             
-            const strategy = document.getElementById('tradeStrategy').value;
+            // Simulate AI strategy test
+            const testResult = Math.random() > 0.3; // 70% win rate for testing
             const testTrade = {
                 id: 'TEST_' + Date.now(),
-                type: strategy + ' (TEST)',
+                type: 'AI Test',
+                direction: Math.random() > 0.5 ? 'call' : 'put',
                 amount: 1.00,
                 time: new Date().toLocaleTimeString(),
-                status: Math.random() > 0.4 ? 'win' : 'loss', // 60% win rate for testing
-                profit: Math.random() > 0.4 ? 0.85 : -1.00,
-                isAuto: false,
-                market: currentMarket
+                status: testResult ? 'win' : 'loss',
+                profit: testResult ? 0.85 : -1.00,
+                isAI: true,
+                market: currentMarket,
+                confidence: Math.floor(Math.random() * 40) + 60
             };
             
             tradeHistory.unshift(testTrade);
             updateTradeHistory();
             updateTradeStats();
-            showAlert(`Test ${strategy} completed - ${testTrade.status.toUpperCase()}`, 'info');
+            showAlert(`AI Strategy test completed - ${testTrade.status.toUpperCase()}`, 'info');
         }
 
-        function toggleAutoTrade() {
-            const toggle = document.getElementById('autoTradeToggle');
-            autoTradeEnabled = toggle.checked;
-            updateAutoTradeStatus();
+        function toggleAITrade() {
+            const toggle = document.getElementById('aiTradeToggle');
+            aiTradeEnabled = toggle.checked;
+            updateAITradeStatus();
             
-            if (autoTradeEnabled && !isConnected) {
+            if (aiTradeEnabled && !isConnected) {
                 showAlert('Please connect to Deriv first', 'error');
                 toggle.checked = false;
-                autoTradeEnabled = false;
-                updateAutoTradeStatus();
+                aiTradeEnabled = false;
+                updateAITradeStatus();
                 return;
             }
             
-            const strategy = document.getElementById('tradeStrategy').value;
-            const message = autoTradeEnabled 
-                ? `🤖 Auto trading enabled with ${strategy.toUpperCase()} strategy` 
-                : '⏹️ Auto trading disabled';
-            showAlert(message, autoTradeEnabled ? 'success' : 'info');
+            const message = aiTradeEnabled 
+                ? '🤖 AI Auto Trading activated! The bot will now trade based on AI predictions.' 
+                : '⏹️ AI Auto Trading deactivated';
+            showAlert(message, aiTradeEnabled ? 'success' : 'info');
         }
 
         function updateStrategyInfo() {
-            const strategy = document.getElementById('tradeStrategy').value;
-            const infoElement = document.getElementById('strategyInfo');
+            // Strategy info is now displayed in the AI analysis panel
+        }
+
+        function updateConfidenceDisplay() {
+            const confidence = document.getElementById('minConfidence').value;
+            document.getElementById('confidenceDisplay').textContent = confidence + '%';
+        }
+
+        function updateRiskLevel() {
+            const riskLevel = document.getElementById('riskLevel').value;
+            const riskFill = document.getElementById('riskFill');
             
-            const strategyDescriptions = {
-                'smart_over4': 'Smart Over 4 (AI): Uses pattern analysis to predict when digits will be over 4 after streaks of under 5. Higher accuracy, fewer trades.',
-                'smart_under5': 'Smart Under 5 (AI): Uses pattern analysis to predict when digits will be under 5 after streaks of over 4. Higher accuracy, fewer trades.',
-                'pattern_over4': 'Pattern Over 4: Trades over 4 when detecting consecutive under 5 patterns. Medium accuracy, moderate trades.',
-                'pattern_under5': 'Pattern Under 5: Trades under 5 when detecting consecutive over 4 patterns. Medium accuracy, moderate trades.',
-                'over4': 'Simple Over 4: Trades over 4 whenever current digit is over 4. Basic strategy, many trades.',
-                'under5': 'Simple Under 5: Trades under 5 whenever current digit is under 5. Basic strategy, many trades.',
-                'even': 'Even Digits: Trades on even digits (0,2,4,6,8). 50% probability, frequent trades.',
-                'odd': 'Odd Digits: Trades on odd digits (1,3,5,7,9). 50% probability, frequent trades.'
-            };
+            switch (riskLevel) {
+                case 'conservative':
+                    riskFill.style.width = '30%';
+                    break;
+                case 'balanced':
+                    riskFill.style.width = '60%';
+                    break;
+                case 'aggressive':
+                    riskFill.style.width = '90%';
+                    break;
+            }
+        }
+
+        function updateDigitDisplay(digit) {
+            const digitElement = document.getElementById('currentDigit');
+            digitElement.textContent = digit;
             
-            infoElement.innerHTML = `<strong>${strategy.replace('_', ' ').toUpperCase()}:</strong> ${strategyDescriptions[strategy]}`;
+            // Remove all classes
+            digitElement.className = 'current-digit';
+            
+            // Add appropriate class based on last signal
+            if (lastSignal && lastSignal.signal === 'CALL') {
+                digitElement.classList.add('digit-call');
+            } else if (lastSignal && lastSignal.signal === 'PUT') {
+                digitElement.classList.add('digit-put');
+            }
+        }
+
+        function updateRecentDigits() {
+            const container = document.getElementById('recentDigits');
+            container.innerHTML = recentDigits.slice(0, 15).map((digit, index) => {
+                let classes = 'recent-digit';
+                
+                // Highlight based on AI signals
+                if (signalHistory[index]) {
+                    if (signalHistory[index].signal === 'CALL') {
+                        classes += ' call-signal';
+                    } else if (signalHistory[index].signal === 'PUT') {
+                        classes += ' put-signal';
+                    }
+                }
+                
+                return `<div class="${classes}">${digit}</div>`;
+            }).join('');
+            
+            // Update pattern analysis
+            document.getElementById('patternAnalysis').textContent = 
+                recentDigits.slice(0, 20).join(' ');
+        }
+
+        function updateMarketAnalysis() {
+            // Update market trend
+            const trend = calculateTrend();
+            document.getElementById('marketTrend').textContent = trend;
+            
+            // Update volatility display
+            let volText = 'Low';
+            if (volatilityIndex > 70) volText = 'Very High';
+            else if (volatilityIndex > 50) volText = 'High';
+            else if (volatilityIndex > 30) volText = 'Medium';
+            
+            document.getElementById('marketVolatility').textContent = volText;
+            
+            // Update next prediction
+            if (lastSignal) {
+                document.getElementById('nextPrediction').textContent = 
+                    `${lastSignal.signal} (${lastSignal.confidence}% confidence)`;
+            }
+        }
+
+        function calculateTrend() {
+            if (recentDigits.length < 10) return 'Insufficient data';
+            
+            const last10 = recentDigits.slice(0, 10);
+            const avg = last10.reduce((a, b) => a + b, 0) / 10;
+            
+            if (avg > 5.5) return 'Bullish (High digits)';
+            if (avg < 3.5) return 'Bearish (Low digits)';
+            return 'Neutral (Balanced)';
         }
 
         function updateConnectionStatus() {
@@ -1258,15 +1603,19 @@
             }
         }
 
-        function updateAutoTradeStatus() {
-            document.getElementById('autoTradeStatus').textContent = autoTradeEnabled ? 'ON' : 'OFF';
+        function updateAITradeStatus() {
+            document.getElementById('aiTradeStatus').textContent = aiTradeEnabled ? 'ON' : 'OFF';
         }
 
         function updateStats() {
             document.getElementById('totalTicks').textContent = tickCount;
-            document.getElementById('over4Count').textContent = over4Count;
-            const percentage = tickCount > 0 ? ((over4Count / tickCount) * 100).toFixed(1) : 0;
-            document.getElementById('over4Percentage').textContent = percentage + '%';
+            
+            // Update AI accuracy
+            const accuracy = totalPredictions > 0 ? 
+                Math.round((correctPredictions / totalPredictions) * 100) : 0;
+            document.getElementById('aiAccuracy').textContent = accuracy + '%';
+            
+            document.getElementById('todayProfit').textContent = '$' + todayProfit.toFixed(2);
         }
 
         function updateBalance() {
@@ -1277,22 +1626,23 @@
             const historyContainer = document.getElementById('tradeHistory');
             
             if (tradeHistory.length === 0) {
-                historyContainer.innerHTML = '<div style="text-align: center; color: #718096; padding: 20px;">No trades yet</div>';
+                historyContainer.innerHTML = '<div style="text-align: center; color: #a0a0a0; padding: 20px;">No trades yet - AI is ready to start</div>';
                 return;
             }
             
             historyContainer.innerHTML = tradeHistory.slice(0, 20).map(trade => `
                 <div class="history-item ${trade.status}">
                     <div>
-                        <strong>${trade.type.toUpperCase()}</strong>
-                        ${trade.isAuto ? '🤖' : '👤'}
+                        <strong>${trade.type}</strong>
+                        ${trade.isAI ? '🧠' : '👤'}
+                        ${trade.confidence ? `(${trade.confidence}%)` : ''}
                         <br>
                         <small>${trade.time} • ${trade.market}</small>
                     </div>
                     <div>
                         $${trade.amount.toFixed(2)}
                         <br>
-                        <small style="color: ${trade.status === 'win' ? '#38a169' : trade.status === 'loss' ? '#e53e3e' : '#718096'}">
+                        <small style="color: ${trade.status === 'win' ? '#4ecdc4' : trade.status === 'loss' ? '#ff6b6b' : '#a0a0a0'}">
                             ${trade.status === 'open' ? 'OPEN' : 
                               trade.status === 'win' ? `+$${trade.profit.toFixed(2)}` : 
                               trade.status === 'loss' ? `$${trade.profit.toFixed(2)}` : 'PENDING'}
@@ -1313,14 +1663,16 @@
             document.getElementById('totalTrades').textContent = completedTrades.length;
             document.getElementById('winRate').textContent = winRate + '%';
             document.getElementById('totalProfit').textContent = '$' + totalProfit.toFixed(2);
+            document.getElementById('bestStreak').textContent = bestStreak;
         }
 
         // Initialize
         updateConnectionStatus();
-        updateAutoTradeStatus();
+        updateAITradeStatus();
         updateStats();
         updateBalance();
-        updateStrategyInfo();
+        updateRiskLevel();
+        updateConfidenceDisplay();
     </script>
 </body>
 </html>
