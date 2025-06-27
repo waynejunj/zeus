@@ -4,193 +4,187 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
-    <title>Zeus </title>
+    <title>Zeus Trading Bot</title>
     <link rel="stylesheet" href="./index.css">
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🧠 Zeus </h1>
-            <p>Intelligent Call/Put Prediction System with Advanced Market Analysis</p>
+            <h1>🧠 Zeus Trading Bot</h1>
+            <p>Advanced AI Trading System with Smart Call/Put Predictions</p>
         </div>
 
-        <div class="main-grid">
-            <div class="card">
-                <div class="ai-status">
-                    <div class="ai-indicator"></div>
-                    <span><strong>AI Status:</strong> <span id="aiStatus">Initializing Neural Networks...</span></span>
-                </div>
-
-                <div class="connection-status">
-                    <div class="status-indicator" id="connectionStatus"></div>
-                    <span id="connectionText">Disconnected</span>
-                    <button class="btn btn-danger" id="disconnectBtn" onclick="disconnect()" style="display: none;">Disconnect</button>
-                </div>
-
-                <div class="input-group">
-                    <label for="appId">App ID:</label>
-                    <input type="text" id="appId" placeholder="Enter your Deriv App ID" value="1089">
-                </div>
-
-                <div class="input-group">
-                    <label for="apiToken">API Token:</label>
-                    <input type="password" id="apiToken" placeholder="Enter your API Token">
-                </div>
-
-                <div class="input-group">
-                    <label for="marketSelect">Trading Market:</label>
-                    <select id="marketSelect">
-                        <option value="R_10">Volatility 10 Index (Stable)</option>
-                        <option value="R_25">Volatility 25 Index (Low Risk)</option>
-                        <option value="R_50">Volatility 50 Index (Balanced)</option>
-                        <option value="R_75" selected>Volatility 75 Index (Recommended)</option>
-                        <option value="R_100">Volatility 100 Index (High Risk)</option>
-                        <option value="1HZ10V">Volatility 10 (1s) - Fast</option>
-                        <option value="1HZ25V">Volatility 25 (1s) - Fast</option>
-                        <option value="1HZ50V">Volatility 50 (1s) - Fast</option>
-                        <option value="1HZ75V">Volatility 75 (1s) - Fast</option>
-                        <option value="1HZ100V">Volatility 100 (1s) - Fast</option>
-                    </select>
-                </div>
-
-                <button class="btn btn-primary" id="connectBtn" onclick="connect()">🚀 Connect & Initialize AI</button>
-
-                <div class="digit-display">
-                    <div class="current-digit" id="currentDigit">-</div>
-                    <div style="font-size: 1.1rem; color: #a0a0a0; margin-top: 10px;">
-                        Current Last Digit
+        <!-- Main Trading Dashboard -->
+        <div class="trading-dashboard">
+            <!-- Left Panel - Connection & Controls -->
+            <div class="control-panel">
+                <div class="card">
+                    <h3>🔗 Connection</h3>
+                    <div class="connection-status">
+                        <div class="status-indicator" id="connectionStatus"></div>
+                        <span id="connectionText">Disconnected</span>
                     </div>
-                    <div class="recent-digits" id="recentDigits"></div>
-                </div>
 
-                <div class="prediction-display" id="predictionDisplay">
-                    <div class="ai-brain">
-                        <div class="brain-icon">🧠</div>
+                    <div class="input-group">
+                        <label for="appId">App ID:</label>
+                        <input type="text" id="appId" placeholder="Enter App ID" value="1089">
                     </div>
-                    <div><strong>AI Prediction:</strong> <span id="aiPrediction">Analyzing market patterns...</span></div>
-                    <div style="margin-top: 10px;">
-                        <strong>Confidence:</strong> <span id="aiConfidence">0%</span> | 
-                        <strong>Signal:</strong> <span id="aiSignal">WAIT</span>
+
+                    <div class="input-group">
+                        <label for="apiToken">API Token:</label>
+                        <input type="password" id="apiToken" placeholder="Enter API Token">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="marketSelect">Market:</label>
+                        <select id="marketSelect">
+                            <option value="R_10">Volatility 10</option>
+                            <option value="R_25">Volatility 25</option>
+                            <option value="R_50">Volatility 50</option>
+                            <option value="R_75" selected>Volatility 75</option>
+                            <option value="R_100">Volatility 100</option>
+                        </select>
+                    </div>
+
+                    <div class="button-group">
+                        <button class="btn btn-primary" id="connectBtn" onclick="connect()">Connect</button>
+                        <button class="btn btn-danger" id="disconnectBtn" onclick="disconnect()" style="display: none;">Disconnect</button>
                     </div>
                 </div>
 
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <div class="stat-value" id="totalTicks">0</div>
-                        <div class="stat-label">Total Ticks</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="aiAccuracy">0%</div>
-                        <div class="stat-label">AI Accuracy</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="balance">$0.00</div>
-                        <div class="stat-label">Balance</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value" id="todayProfit">$0.00</div>
-                        <div class="stat-label">Today's P&L</div>
-                    </div>
-                </div>
-
-                <div class="ai-section">
-                    <h3 style="margin-bottom: 20px; color: #00d4ff;">🤖 Advanced AI Trading System</h3>
-                    
-                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+                <!-- Auto Trade Controls -->
+                <div class="card">
+                    <h3>🤖 Auto Trade</h3>
+                    <div class="auto-trade-toggle">
                         <label class="toggle-switch">
                             <input type="checkbox" id="aiTradeToggle" onchange="toggleAITrade()">
                             <span class="slider"></span>
                         </label>
-                        <span><strong>AI Auto Trade:</strong> <span id="aiTradeStatus">OFF</span></span>
+                        <span><strong>Status:</strong> <span id="aiTradeStatus">OFF</span></span>
                     </div>
 
-                    <div class="ai-controls">
-                        <div class="input-group">
-                            <label for="tradeAmount">Trade Amount ($):</label>
-                            <input type="number" id="tradeAmount" value="2" min="0.35" step="0.01">
-                        </div>
-                        <div class="input-group">
-                            <label for="tradeDuration">Duration (ticks):</label>
-                            <select id="tradeDuration">
-                                <option value="1">1 tick</option>
-                                <option value="2">2 ticks</option>
-                                <option value="3">3 ticks</option>
-                                <option value="5" selected>5 ticks</option>
-                                <option value="10">10 ticks</option>
-                            </select>
-                        </div>
-                        <div class="input-group">
-                            <label for="aiStrategy">AI Strategy:</label>
-                            <select id="aiStrategy" onchange="updateStrategyInfo()">
-                                <option value="neural_prediction">Neural Network Prediction</option>
-                                <option value="pattern_recognition">Pattern Recognition AI</option>
-                                <option value="market_sentiment">Market Sentiment Analysis</option>
-                                <option value="volatility_prediction">Volatility Prediction</option>
-                                <option value="hybrid_ai">Hybrid AI (All Combined)</option>
-                            </select>
-                        </div>
-                        <div class="input-group">
-                            <label for="riskLevel">Risk Level:</label>
-                            <select id="riskLevel" onchange="updateRiskLevel()">
-                                <option value="conservative">Conservative (High Accuracy)</option>
-                                <option value="balanced" selected>Balanced (Medium Risk)</option>
-                                <option value="aggressive">Aggressive (High Frequency)</option>
-                            </select>
-                        </div>
+                    <div class="input-group">
+                        <label for="tradeAmount">Amount ($):</label>
+                        <input type="number" id="tradeAmount" value="2" min="0.35" step="0.01">
                     </div>
 
-                    <div class="advanced-settings">
-                        <h4 style="color: #00d4ff; margin-bottom: 15px;">⚙️ Advanced Settings</h4>
-                        
-                        <div class="input-group">
-                            <label for="minConfidence">Minimum AI Confidence (%):</label>
-                            <input type="range" id="minConfidence" min="60" max="95" value="75" oninput="updateConfidenceDisplay()">
-                            <div style="text-align: center; margin-top: 5px; color: #00d4ff;">
-                                <span id="confidenceDisplay">75%</span>
-                            </div>
-                        </div>
-
-                        <div class="risk-meter">
-                            <label>Current Risk Level:</label>
-                            <div class="risk-bar">
-                                <div class="risk-fill" id="riskFill" style="width: 50%;"></div>
-                            </div>
-                        </div>
-
-                        <div class="input-group">
-                            <label for="maxTrades">Max Trades per Hour:</label>
-                            <input type="number" id="maxTrades" value="8" min="1" max="20">
-                        </div>
-
-                        <div class="input-group">
-                            <label for="stopLoss">Stop Loss ($):</label>
-                            <input type="number" id="stopLoss" value="20" min="5" step="1">
-                        </div>
-
-                        <div class="input-group">
-                            <label for="takeProfit">Take Profit ($):</label>
-                            <input type="number" id="takeProfit" value="50" min="10" step="1">
-                        </div>
+                    <div class="input-group">
+                        <label for="tradeDuration">Duration:</label>
+                        <select id="tradeDuration">
+                            <option value="1">1 tick</option>
+                            <option value="2">2 ticks</option>
+                            <option value="3">3 ticks</option>
+                            <option value="5" selected>5 ticks</option>
+                        </select>
                     </div>
 
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <button class="btn btn-success" onclick="placeManualTrade('call')" id="callBtn">📈 Manual CALL</button>
-                        <button class="btn btn-danger" onclick="placeManualTrade('put')" id="putBtn">📉 Manual PUT</button>
-                        <button class="btn btn-primary" onclick="testAIStrategy()">🧪 Test AI Strategy</button>
+                    <div class="input-group">
+                        <label for="minConfidence">Min Confidence:</label>
+                        <input type="range" id="minConfidence" min="60" max="95" value="75" oninput="updateConfidenceDisplay()">
+                        <div class="confidence-display">
+                            <span id="confidenceDisplay">75%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manual Trade -->
+                <div class="card">
+                    <h3>👤 Manual Trade</h3>
+                    <div class="manual-trade-buttons">
+                        <button class="btn btn-success" onclick="placeManualTrade('call')" id="callBtn">
+                            📈 CALL
+                        </button>
+                        <button class="btn btn-danger" onclick="placeManualTrade('put')" id="putBtn">
+                            📉 PUT
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <div class="card">
-                <h3 style="margin-bottom: 15px; color: #00d4ff;">📊 Trading History</h3>
-                <div class="history-section" id="tradeHistory">
-                    <div style="text-align: center; color: #a0a0a0; padding: 20px;">
-                        No trades yet - AI is ready to start
+            <!-- Center Panel - AI Analysis & Current Digit -->
+            <div class="analysis-panel">
+                <div class="card">
+                    <div class="current-digit-section">
+                        <div class="current-digit" id="currentDigit">-</div>
+                        <div class="digit-label">Last Digit</div>
+                        <div class="recent-digits" id="recentDigits"></div>
+                    </div>
+
+                    <div class="ai-prediction-box" id="predictionDisplay">
+                        <div class="ai-status">
+                            <div class="ai-indicator"></div>
+                            <span id="aiStatus">Initializing...</span>
+                        </div>
+                        <div class="prediction-content">
+                            <div class="prediction-main">
+                                <strong>AI Prediction:</strong> <span id="aiPrediction">Analyzing...</span>
+                            </div>
+                            <div class="prediction-details">
+                                <span><strong>Confidence:</strong> <span id="aiConfidence">0%</span></span>
+                                <span><strong>Signal:</strong> <span id="aiSignal">WAIT</span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="probability-bars">
+                        <div class="prob-bar">
+                            <label>CALL Probability</label>
+                            <div class="prob-fill-container">
+                                <div class="prob-fill call-fill" id="callProbBar" style="width: 50%"></div>
+                            </div>
+                            <span id="callProbability">50%</span>
+                        </div>
+                        <div class="prob-bar">
+                            <label>PUT Probability</label>
+                            <div class="prob-fill-container">
+                                <div class="prob-fill put-fill" id="putProbBar" style="width: 50%"></div>
+                            </div>
+                            <span id="putProbability">50%</span>
+                        </div>
                     </div>
                 </div>
-                
-                <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid rgba(0, 212, 255, 0.3);">
+
+                <!-- Market Analysis -->
+                <div class="card">
+                    <h3>📊 Market Analysis</h3>
+                    <div class="market-stats">
+                        <div class="stat-row">
+                            <span>Trend:</span>
+                            <span id="marketTrend">Neutral</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>Volatility:</span>
+                            <span id="marketVolatility">Medium</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>Pattern:</span>
+                            <span id="patternType">Analyzing...</span>
+                        </div>
+                    </div>
+                    
+                    <div class="signal-strength">
+                        <label>Signal Strength</label>
+                        <div class="strength-bar">
+                            <div class="strength-fill" id="signalStrength" style="width: 0%"></div>
+                        </div>
+                        <span id="strengthPercent">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel - Stats & History -->
+            <div class="stats-panel">
+                <div class="card">
+                    <h3>📈 Account Stats</h3>
                     <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value" id="balance">$0.00</div>
+                            <div class="stat-label">Balance</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="todayProfit">$0.00</div>
+                            <div class="stat-label">Today P&L</div>
+                        </div>
                         <div class="stat-item">
                             <div class="stat-value" id="totalTrades">0</div>
                             <div class="stat-label">Total Trades</div>
@@ -200,67 +194,20 @@
                             <div class="stat-label">Win Rate</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-value" id="totalProfit">$0.00</div>
-                            <div class="stat-label">Total P&L</div>
+                            <div class="stat-value" id="aiAccuracy">0%</div>
+                            <div class="stat-label">AI Accuracy</div>
                         </div>
                         <div class="stat-item">
-                            <div class="stat-value" id="bestStreak">0</div>
-                            <div class="stat-label">Best Streak</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h3 style="margin-bottom: 15px; color: #00d4ff;">🔬 AI Market Analysis</h3>
-                
-                <div class="market-analysis">
-                    <div style="margin-bottom: 15px;">
-                        <strong>Market Trend:</strong> <span id="marketTrend">Analyzing...</span>
-                    </div>
-                    <div style="margin-bottom: 15px;">
-                        <strong>Volatility:</strong> <span id="marketVolatility">Medium</span>
-                    </div>
-                    <div style="margin-bottom: 15px;">
-                        <strong>Next Prediction:</strong> <span id="nextPrediction">Calculating...</span>
-                    </div>
-                    
-                    <div class="signal-strength">
-                        <span>Signal Strength:</span>
-                        <div class="strength-bar">
-                            <div class="strength-fill" id="signalStrength" style="width: 0%;"></div>
-                        </div>
-                        <span id="strengthPercent">0%</span>
-                    </div>
-                </div>
-
-                <div style="margin-top: 20px;">
-                    <h4 style="color: #00d4ff; margin-bottom: 15px;">📈 Pattern Analysis</h4>
-                    <div id="patternAnalysis" style="font-family: monospace; font-size: 1.1rem; text-align: center; padding: 15px; background: rgba(0, 0, 0, 0.3); border-radius: 10px;">
-                        Waiting for data...
-                    </div>
-                </div>
-
-                <div style="margin-top: 20px;">
-                    <h4 style="color: #00d4ff; margin-bottom: 15px;">🎯 AI Recommendations</h4>
-                    <div class="stats-grid">
-                        <div class="stat-item">
-                            <div class="stat-value" id="callProbability">0%</div>
-                            <div class="stat-label">CALL Probability</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="putProbability">0%</div>
-                            <div class="stat-label">PUT Probability</div>
+                            <div class="stat-value" id="totalTicks">0</div>
+                            <div class="stat-label">Ticks</div>
                         </div>
                     </div>
                 </div>
 
-                <div style="margin-top: 20px;">
-                    <h4 style="color: #00d4ff; margin-bottom: 15px;">⚡ Real-time Signals</h4>
-                    <div id="realTimeSignals" style="background: rgba(0, 0, 0, 0.3); padding: 15px; border-radius: 10px; min-height: 100px;">
-                        <div style="text-align: center; color: #a0a0a0;">
-                            Connect to start receiving AI signals
-                        </div>
+                <div class="card">
+                    <h3>📋 Trade History</h3>
+                    <div class="history-section" id="tradeHistory">
+                        <div class="no-trades">No trades yet</div>
                     </div>
                 </div>
             </div>
@@ -276,8 +223,6 @@
         let tickCount = 0;
         let tradeHistory = [];
         let currentBalance = 0;
-        let tradesThisHour = 0;
-        let lastTradeTime = 0;
         let isTrading = false;
         let recentDigits = [];
         let currentMarket = 'R_75';
@@ -286,12 +231,11 @@
         let correctPredictions = 0;
         let totalPredictions = 0;
         let todayProfit = 0;
-        let bestStreak = 0;
-        let currentStreak = 0;
         let lastSignal = null;
-        let signalHistory = [];
+        let lastTradeTime = 0;
+        let tradesThisHour = 0;
 
-        // Advanced AI variables
+        // AI Neural Network
         let neuralNetwork = {
             weights: [],
             biases: [],
@@ -305,23 +249,13 @@
         };
 
         let volatilityIndex = 0;
-        let trendStrength = 0;
 
-        // Initialize AI system
         function initializeAI() {
-            document.getElementById('aiStatus').textContent = 'Neural networks initialized, pattern recognition active';
-            
-            // Initialize neural network weights (simplified)
+            document.getElementById('aiStatus').textContent = 'AI System Active';
             neuralNetwork.weights = Array(20).fill().map(() => Math.random() * 2 - 1);
             neuralNetwork.biases = Array(5).fill().map(() => Math.random() * 2 - 1);
-            
             showAlert('🧠 AI System initialized successfully!', 'success');
         }
-
-        // Reset hourly trade counter
-        setInterval(() => {
-            tradesThisHour = 0;
-        }, 3600000);
 
         function showAlert(message, type = 'info') {
             const alertContainer = document.getElementById('alertContainer');
@@ -350,7 +284,6 @@
                 
                 derivWs.onopen = function() {
                     console.log('Connected to Deriv WebSocket');
-                    
                     derivWs.send(JSON.stringify({
                         authorize: apiToken
                     }));
@@ -371,7 +304,7 @@
                         updateConnectionStatus();
                         updateBalance();
                         initializeAI();
-                        showAlert(`🚀 Connected to ${currentMarket}! AI system activated.`, 'success');
+                        showAlert(`🚀 Connected to ${currentMarket}!`, 'success');
                         
                         // Subscribe to tick stream
                         derivWs.send(JSON.stringify({
@@ -438,7 +371,6 @@
             const tickQuote = tick.quote.toString();
             const lastDigit = parseInt(tickQuote.slice(-1));
             
-            // Store comprehensive tick data
             const tickData = {
                 digit: lastDigit,
                 quote: tick.quote,
@@ -447,17 +379,14 @@
             };
             
             tickHistory.push(tickData);
-            
-            // Keep last 200 ticks for advanced analysis
-            if (tickHistory.length > 200) {
+            if (tickHistory.length > 100) {
                 tickHistory.shift();
             }
             
             tickCount++;
             
-            // Update recent digits
             recentDigits.unshift(lastDigit);
-            if (recentDigits.length > 50) {
+            if (recentDigits.length > 20) {
                 recentDigits.pop();
             }
             
@@ -472,35 +401,21 @@
             
             // Check for AI trading opportunity
             if (aiTradeEnabled && shouldAITrade()) {
-                setTimeout(() => executeAITrade(), 500);
+                console.log('AI Trade conditions met, executing trade...');
+                setTimeout(() => executeAITrade(), 1000);
             }
         }
 
         function runAIAnalysis(tickData) {
-            if (tickHistory.length < 20) return;
+            if (tickHistory.length < 10) return;
             
-            // Neural Network Prediction
             const prediction = neuralNetworkPredict();
-            
-            // Pattern Recognition
             const pattern = recognizePattern();
-            
-            // Market Sentiment Analysis
             updateMarketSentiment();
-            
-            // Volatility Analysis
             calculateVolatility();
             
-            // Generate AI prediction
             const aiPrediction = generateAIPrediction(prediction, pattern);
-            
-            // Update AI display
             updateAIPrediction(aiPrediction);
-            
-            // Store prediction for accuracy tracking
-            if (lastSignal) {
-                checkPredictionAccuracy(tickData.digit);
-            }
             
             lastSignal = aiPrediction;
         }
@@ -508,8 +423,7 @@
         function neuralNetworkPredict() {
             if (recentDigits.length < 10) return { call: 0.5, put: 0.5 };
             
-            // Simplified neural network calculation
-            const inputs = recentDigits.slice(0, 10).map(d => d / 9); // Normalize
+            const inputs = recentDigits.slice(0, 10).map(d => d / 9);
             let callScore = 0;
             let putScore = 0;
             
@@ -518,11 +432,9 @@
                 putScore += inputs[i] * neuralNetwork.weights[i + 10];
             }
             
-            // Apply activation function (sigmoid)
             callScore = 1 / (1 + Math.exp(-callScore));
             putScore = 1 / (1 + Math.exp(-putScore));
             
-            // Normalize to sum to 1
             const total = callScore + putScore;
             return {
                 call: callScore / total,
@@ -531,54 +443,37 @@
         }
 
         function recognizePattern() {
-            if (recentDigits.length < 15) return { strength: 0, direction: 'neutral' };
+            if (recentDigits.length < 10) return { strength: 0, direction: 'neutral' };
             
-            const last15 = recentDigits.slice(0, 15);
-            
-            // Detect trends
-            let upTrend = 0;
-            let downTrend = 0;
-            
-            for (let i = 1; i < last15.length; i++) {
-                if (last15[i] > last15[i-1]) upTrend++;
-                if (last15[i] < last15[i-1]) downTrend++;
-            }
-            
-            // Detect patterns
-            const consecutiveHigh = last15.slice(0, 5).filter(d => d > 4).length;
-            const consecutiveLow = last15.slice(0, 5).filter(d => d < 5).length;
+            const last10 = recentDigits.slice(0, 10);
+            const consecutiveHigh = last10.slice(0, 5).filter(d => d > 5).length;
+            const consecutiveLow = last10.slice(0, 5).filter(d => d < 4).length;
             
             let strength = 0;
             let direction = 'neutral';
             
             if (consecutiveHigh >= 4) {
                 strength = 0.8;
-                direction = 'put'; // Expect reversal
+                direction = 'put';
             } else if (consecutiveLow >= 4) {
                 strength = 0.8;
-                direction = 'call'; // Expect reversal
-            } else if (upTrend > downTrend * 1.5) {
-                strength = 0.6;
                 direction = 'call';
-            } else if (downTrend > upTrend * 1.5) {
-                strength = 0.6;
-                direction = 'put';
             }
             
             return { strength, direction };
         }
 
         function updateMarketSentiment() {
-            if (recentDigits.length < 20) return;
+            if (recentDigits.length < 15) return;
             
-            const last20 = recentDigits.slice(0, 20);
-            const highDigits = last20.filter(d => d > 6).length;
-            const lowDigits = last20.filter(d => d < 3).length;
-            const midDigits = last20.filter(d => d >= 3 && d <= 6).length;
+            const last15 = recentDigits.slice(0, 15);
+            const highDigits = last15.filter(d => d > 6).length;
+            const lowDigits = last15.filter(d => d < 3).length;
+            const midDigits = last15.filter(d => d >= 3 && d <= 6).length;
             
-            marketSentiment.bullish = highDigits / 20;
-            marketSentiment.bearish = lowDigits / 20;
-            marketSentiment.neutral = midDigits / 20;
+            marketSentiment.bullish = highDigits / 15;
+            marketSentiment.bearish = lowDigits / 15;
+            marketSentiment.neutral = midDigits / 15;
         }
 
         function calculateVolatility() {
@@ -596,9 +491,6 @@
         }
 
         function generateAIPrediction(neuralPred, pattern) {
-            const strategy = document.getElementById('aiStrategy').value;
-            const riskLevel = document.getElementById('riskLevel').value;
-            
             let callProb = neuralPred.call;
             let putProb = neuralPred.put;
             
@@ -613,22 +505,11 @@
             callProb += marketSentiment.bullish * 0.2;
             putProb += marketSentiment.bearish * 0.2;
             
-            // Adjust based on volatility
-            if (volatilityIndex > 50) {
-                // High volatility - more extreme predictions
-                if (callProb > putProb) {
-                    callProb += 0.1;
-                } else {
-                    putProb += 0.1;
-                }
-            }
-            
             // Normalize
             const total = callProb + putProb;
             callProb = callProb / total;
             putProb = putProb / total;
             
-            // Determine confidence and signal
             const confidence = Math.abs(callProb - putProb) * 100;
             const minConfidence = parseInt(document.getElementById('minConfidence').value);
             
@@ -663,9 +544,13 @@
             document.getElementById('callProbability').textContent = `${prediction.callProb}%`;
             document.getElementById('putProbability').textContent = `${prediction.putProb}%`;
             
+            // Update probability bars
+            document.getElementById('callProbBar').style.width = `${prediction.callProb}%`;
+            document.getElementById('putProbBar').style.width = `${prediction.putProb}%`;
+            
             // Update prediction display styling
             const predDisplay = document.getElementById('predictionDisplay');
-            predDisplay.className = 'prediction-display';
+            predDisplay.className = 'ai-prediction-box';
             
             if (prediction.signal === 'CALL') {
                 predDisplay.classList.add('prediction-call');
@@ -673,76 +558,47 @@
                 predDisplay.classList.add('prediction-put');
             }
             
-            // Update signal strength bar
+            // Update signal strength
             document.getElementById('signalStrength').style.width = `${prediction.confidence}%`;
             document.getElementById('strengthPercent').textContent = `${prediction.confidence}%`;
-            
-            // Add to real-time signals
-            addRealTimeSignal(prediction);
-        }
-
-        function addRealTimeSignal(prediction) {
-            const signalsContainer = document.getElementById('realTimeSignals');
-            const time = new Date().toLocaleTimeString();
-            
-            const signalElement = document.createElement('div');
-            signalElement.style.cssText = `
-                padding: 8px;
-                margin: 5px 0;
-                border-radius: 8px;
-                font-size: 0.9rem;
-                background: rgba(255, 255, 255, 0.1);
-                border-left: 4px solid ${prediction.signal === 'CALL' ? '#4ecdc4' : prediction.signal === 'PUT' ? '#ff6b6b' : '#00d4ff'};
-            `;
-            
-            signalElement.innerHTML = `
-                <strong>${time}</strong> - ${prediction.signal} 
-                (${prediction.confidence}% confidence)
-            `;
-            
-            signalsContainer.insertBefore(signalElement, signalsContainer.firstChild);
-            
-            // Keep only last 10 signals
-            while (signalsContainer.children.length > 10) {
-                signalsContainer.removeChild(signalsContainer.lastChild);
-            }
         }
 
         function shouldAITrade() {
-            if (!lastSignal || lastSignal.signal === 'WAIT') return false;
+            if (!lastSignal || lastSignal.signal === 'WAIT') {
+                console.log('AI Trade: No valid signal');
+                return false;
+            }
             
-            const maxTrades = parseInt(document.getElementById('maxTrades').value);
             const now = Date.now();
-            
-            if (tradesThisHour >= maxTrades || now - lastTradeTime < 30000 || isTrading) {
+            if (now - lastTradeTime < 30000) { // 30 seconds between trades
+                console.log('AI Trade: Too soon since last trade');
                 return false;
             }
             
-            // Check stop loss and take profit
-            if (todayProfit <= -parseInt(document.getElementById('stopLoss').value)) {
-                showAlert('🛑 Stop loss reached for today', 'error');
+            if (isTrading) {
+                console.log('AI Trade: Already trading');
                 return false;
             }
             
-            if (todayProfit >= parseInt(document.getElementById('takeProfit').value)) {
-                showAlert('🎯 Take profit reached for today', 'success');
+            if (tradesThisHour >= 10) {
+                console.log('AI Trade: Max trades per hour reached');
                 return false;
             }
             
+            console.log('AI Trade: All conditions met, ready to trade');
             return true;
         }
 
         function executeAITrade() {
-            if (!lastSignal || !lastSignal.direction) return;
+            if (!lastSignal || !lastSignal.direction) {
+                console.log('No valid signal for AI trade');
+                return;
+            }
             
             const amount = parseFloat(document.getElementById('tradeAmount').value);
             const duration = parseInt(document.getElementById('tradeDuration').value);
             
-            if (amount > currentBalance) {
-                showAlert('Insufficient balance for AI trade', 'error');
-                return;
-            }
-            
+            console.log(`Executing AI trade: ${lastSignal.direction} with $${amount}`);
             placeTrade(lastSignal.direction, amount, duration, true);
         }
 
@@ -778,13 +634,7 @@
             lastTradeTime = Date.now();
             tradesThisHour++;
             
-            // Determine contract type
-            let contractType;
-            if (direction === 'call') {
-                contractType = 'CALL';
-            } else {
-                contractType = 'PUT';
-            }
+            const contractType = direction === 'call' ? 'CALL' : 'PUT';
             
             const proposalRequest = {
                 proposal: 1,
@@ -827,7 +677,7 @@
                         isTrading = false;
                     } else {
                         const tradeType = isAI ? `AI ${direction.toUpperCase()}` : `Manual ${direction.toUpperCase()}`;
-                        showAlert(`${tradeType} trade placed! Contract: ${data.buy.contract_id}`, 'success');
+                        showAlert(`${tradeType} trade placed!`, 'success');
                         
                         derivWs.send(JSON.stringify({
                             proposal_open_contract: 1,
@@ -872,27 +722,13 @@
                         trade.payout = contract.payout;
                         isTrading = false;
                         
-                        // Update profit tracking
                         todayProfit += contract.profit;
                         
-                        // Update streak
-                        if (contract.profit > 0) {
-                            currentStreak++;
-                            if (currentStreak > bestStreak) {
-                                bestStreak = currentStreak;
-                            }
-                        } else {
-                            currentStreak = 0;
-                        }
-                        
-                        // Update AI accuracy if it was an AI trade
                         if (trade.isAI) {
                             totalPredictions++;
                             if (contract.profit > 0) {
                                 correctPredictions++;
                             }
-                            
-                            // Update neural network weights (simplified learning)
                             updateNeuralNetwork(contract.profit > 0);
                         }
                         
@@ -910,45 +746,12 @@
         }
 
         function updateNeuralNetwork(won) {
-            // Simplified neural network learning
             const learningRate = neuralNetwork.learningRate;
             const adjustment = won ? learningRate : -learningRate;
             
             for (let i = 0; i < neuralNetwork.weights.length; i++) {
                 neuralNetwork.weights[i] += adjustment * (Math.random() - 0.5);
             }
-        }
-
-        function checkPredictionAccuracy(actualDigit) {
-            // This is a simplified accuracy check
-            // In a real implementation, you'd track specific predictions vs outcomes
-        }
-
-        function testAIStrategy() {
-            if (!isConnected) {
-                showAlert('Please connect to Deriv first', 'error');
-                return;
-            }
-            
-            // Simulate AI strategy test
-            const testResult = Math.random() > 0.3; // 70% win rate for testing
-            const testTrade = {
-                id: 'TEST_' + Date.now(),
-                type: 'AI Test',
-                direction: Math.random() > 0.5 ? 'call' : 'put',
-                amount: 1.00,
-                time: new Date().toLocaleTimeString(),
-                status: testResult ? 'win' : 'loss',
-                profit: testResult ? 0.85 : -1.00,
-                isAI: true,
-                market: currentMarket,
-                confidence: Math.floor(Math.random() * 40) + 60
-            };
-            
-            tradeHistory.unshift(testTrade);
-            updateTradeHistory();
-            updateTradeStats();
-            showAlert(`AI Strategy test completed - ${testTrade.status.toUpperCase()}`, 'info');
         }
 
         function toggleAITrade() {
@@ -965,13 +768,11 @@
             }
             
             const message = aiTradeEnabled 
-                ? '🤖 AI Auto Trading activated! The bot will now trade based on AI predictions.' 
-                : '⏹️ AI Auto Trading deactivated';
+                ? '🤖 AI Auto Trading ACTIVATED!' 
+                : '⏹️ AI Auto Trading DEACTIVATED';
             showAlert(message, aiTradeEnabled ? 'success' : 'info');
-        }
-
-        function updateStrategyInfo() {
-            // Strategy info is now displayed in the AI analysis panel
+            
+            console.log(`AI Auto Trade: ${aiTradeEnabled ? 'ENABLED' : 'DISABLED'}`);
         }
 
         function updateConfidenceDisplay() {
@@ -979,31 +780,12 @@
             document.getElementById('confidenceDisplay').textContent = confidence + '%';
         }
 
-        function updateRiskLevel() {
-            const riskLevel = document.getElementById('riskLevel').value;
-            const riskFill = document.getElementById('riskFill');
-            
-            switch (riskLevel) {
-                case 'conservative':
-                    riskFill.style.width = '30%';
-                    break;
-                case 'balanced':
-                    riskFill.style.width = '60%';
-                    break;
-                case 'aggressive':
-                    riskFill.style.width = '90%';
-                    break;
-            }
-        }
-
         function updateDigitDisplay(digit) {
             const digitElement = document.getElementById('currentDigit');
             digitElement.textContent = digit;
             
-            // Remove all classes
             digitElement.className = 'current-digit';
             
-            // Add appropriate class based on last signal
             if (lastSignal && lastSignal.signal === 'CALL') {
                 digitElement.classList.add('digit-call');
             } else if (lastSignal && lastSignal.signal === 'PUT') {
@@ -1013,32 +795,15 @@
 
         function updateRecentDigits() {
             const container = document.getElementById('recentDigits');
-            container.innerHTML = recentDigits.slice(0, 15).map((digit, index) => {
-                let classes = 'recent-digit';
-                
-                // Highlight based on AI signals
-                if (signalHistory[index]) {
-                    if (signalHistory[index].signal === 'CALL') {
-                        classes += ' call-signal';
-                    } else if (signalHistory[index].signal === 'PUT') {
-                        classes += ' put-signal';
-                    }
-                }
-                
-                return `<div class="${classes}">${digit}</div>`;
-            }).join('');
-            
-            // Update pattern analysis
-            document.getElementById('patternAnalysis').textContent = 
-                recentDigits.slice(0, 20).join(' ');
+            container.innerHTML = recentDigits.slice(0, 10).map(digit => 
+                `<div class="recent-digit">${digit}</div>`
+            ).join('');
         }
 
         function updateMarketAnalysis() {
-            // Update market trend
             const trend = calculateTrend();
             document.getElementById('marketTrend').textContent = trend;
             
-            // Update volatility display
             let volText = 'Low';
             if (volatilityIndex > 70) volText = 'Very High';
             else if (volatilityIndex > 50) volText = 'High';
@@ -1046,22 +811,22 @@
             
             document.getElementById('marketVolatility').textContent = volText;
             
-            // Update next prediction
-            if (lastSignal) {
-                document.getElementById('nextPrediction').textContent = 
-                    `${lastSignal.signal} (${lastSignal.confidence}% confidence)`;
-            }
+            // Update pattern type
+            const pattern = recognizePattern();
+            document.getElementById('patternType').textContent = 
+                pattern.direction === 'neutral' ? 'No Clear Pattern' : 
+                `${pattern.direction.toUpperCase()} Pattern (${Math.round(pattern.strength * 100)}%)`;
         }
 
         function calculateTrend() {
-            if (recentDigits.length < 10) return 'Insufficient data';
+            if (recentDigits.length < 10) return 'Insufficient Data';
             
             const last10 = recentDigits.slice(0, 10);
             const avg = last10.reduce((a, b) => a + b, 0) / 10;
             
-            if (avg > 5.5) return 'Bullish (High digits)';
-            if (avg < 3.5) return 'Bearish (Low digits)';
-            return 'Neutral (Balanced)';
+            if (avg > 5.5) return 'Bullish';
+            if (avg < 3.5) return 'Bearish';
+            return 'Neutral';
         }
 
         function updateConnectionStatus() {
@@ -1090,7 +855,6 @@
         function updateStats() {
             document.getElementById('totalTicks').textContent = tickCount;
             
-            // Update AI accuracy
             const accuracy = totalPredictions > 0 ? 
                 Math.round((correctPredictions / totalPredictions) * 100) : 0;
             document.getElementById('aiAccuracy').textContent = accuracy + '%';
@@ -1106,23 +870,22 @@
             const historyContainer = document.getElementById('tradeHistory');
             
             if (tradeHistory.length === 0) {
-                historyContainer.innerHTML = '<div style="text-align: center; color: #a0a0a0; padding: 20px;">No trades yet - AI is ready to start</div>';
+                historyContainer.innerHTML = '<div class="no-trades">No trades yet</div>';
                 return;
             }
             
-            historyContainer.innerHTML = tradeHistory.slice(0, 20).map(trade => `
+            historyContainer.innerHTML = tradeHistory.slice(0, 10).map(trade => `
                 <div class="history-item ${trade.status}">
-                    <div>
+                    <div class="trade-info">
                         <strong>${trade.type}</strong>
                         ${trade.isAI ? '🧠' : '👤'}
-                        ${trade.confidence ? `(${trade.confidence}%)` : ''}
                         <br>
-                        <small>${trade.time} • ${trade.market}</small>
+                        <small>${trade.time}</small>
                     </div>
-                    <div>
+                    <div class="trade-result">
                         $${trade.amount.toFixed(2)}
                         <br>
-                        <small style="color: ${trade.status === 'win' ? '#4ecdc4' : trade.status === 'loss' ? '#ff6b6b' : '#a0a0a0'}">
+                        <small class="${trade.status === 'win' ? 'profit' : trade.status === 'loss' ? 'loss' : 'pending'}">
                             ${trade.status === 'open' ? 'OPEN' : 
                               trade.status === 'win' ? `+$${trade.profit.toFixed(2)}` : 
                               trade.status === 'loss' ? `$${trade.profit.toFixed(2)}` : 'PENDING'}
@@ -1142,16 +905,18 @@
             
             document.getElementById('totalTrades').textContent = completedTrades.length;
             document.getElementById('winRate').textContent = winRate + '%';
-            document.getElementById('totalProfit').textContent = '$' + totalProfit.toFixed(2);
-            document.getElementById('bestStreak').textContent = bestStreak;
         }
+
+        // Reset hourly trade counter
+        setInterval(() => {
+            tradesThisHour = 0;
+        }, 3600000);
 
         // Initialize
         updateConnectionStatus();
         updateAITradeStatus();
         updateStats();
         updateBalance();
-        updateRiskLevel();
         updateConfidenceDisplay();
     </script>
 </body>
