@@ -65,7 +65,7 @@ class ZeusAI {
         this.lastTradeTime = 0;
         this.tradesThisHour = 0;
         this.currentPrediction = null;
-        this.lastAIAction = null;
+        this.analysisInterval = null;
         
         this.initializeUI();
         this.startPerformanceChart();
@@ -104,22 +104,25 @@ class ZeusAI {
         this.updateStats();
         this.updateMarketInfo();
         this.renderTradeHistory();
-        this.updateAIActivityLog();
+        this.updateActivityLog();
         
         // Initialize confidence slider
         document.getElementById('minConfidence').addEventListener('input', (e) => {
             this.config.minConfidence = parseInt(e.target.value);
             document.getElementById('confidenceValue').textContent = e.target.value + '%';
+            this.logActivity(`Confidence threshold updated to ${e.target.value}%`);
         });
         
         // Initialize trade amount input
         document.getElementById('tradeAmount').addEventListener('input', (e) => {
             this.config.tradeAmount = parseFloat(e.target.value);
+            this.logActivity(`Trade amount updated to $${e.target.value}`);
         });
         
         // Initialize duration select
         document.getElementById('tradeDuration').addEventListener('change', (e) => {
             this.config.tradeDuration = parseInt(e.target.value);
+            this.logActivity(`Trade duration updated to ${e.target.value} ticks`);
         });
         
         // Initialize risk management inputs
@@ -138,6 +141,57 @@ class ZeusAI {
         document.getElementById('antiMartingaleEnabled').addEventListener('change', (e) => {
             this.config.antiMartingaleEnabled = e.target.checked;
         });
+    }
+    
+    logActivity(message, type = 'info') {
+        const timestamp = new Date().toLocaleTimeString();
+        this.aiActivityLog.unshift({
+            time: timestamp,
+            message: message,
+            type: type
+        });
+        
+        // Keep only last 50 activities
+        if (this.aiActivityLog.length > 50) {
+            this.aiActivityLog.pop();
+        }
+        
+        this.updateActivityLog();
+    }
+    
+    updateActivityLog() {
+        const container = document.getElementById('aiActivityLog');
+        if (!container) return;
+        
+        if (this.aiActivityLog.length === 0) {
+            container.innerHTML = `
+                <div class="no-activity">
+                    <i class="fas fa-robot"></i>
+                    <p>AI system ready</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = this.aiActivityLog.map(activity => `
+            <div class="activity-item">
+                <i class="fas fa-${this.getActivityIcon(activity.type)}"></i>
+                <span>${activity.message}</span>
+                <span class="activity-time">${activity.time}</span>
+            </div>
+        `).join('');
+    }
+    
+    getActivityIcon(type) {
+        switch (type) {
+            case 'trade': return 'exchange-alt';
+            case 'analysis': return 'brain';
+            case 'signal': return 'signal';
+            case 'warning': return 'exclamation-triangle';
+            case 'success': return 'check-circle';
+            case 'error': return 'times-circle';
+            default: return 'info-circle';
+        }
     }
     
     async connect() {
@@ -179,6 +233,13 @@ class ZeusAI {
                 this.updateAIStatus();
                 this.showAlert('Disconnected from Deriv', 'info');
                 this.hideLoadingOverlay();
+                this.logActivity('Disconnected from Deriv', 'warning');
+                
+                // Stop analysis interval
+                if (this.analysisInterval) {
+                    clearInterval(this.analysisInterval);
+                    this.analysisInterval = null;
+                }
             };
             
         } catch (error) {
@@ -198,6 +259,12 @@ class ZeusAI {
         this.updateConnectionStatus();
         this.updateAIStatus();
         this.showAlert('Disconnected from Deriv', 'info');
+        
+        // Stop analysis interval
+        if (this.analysisInterval) {
+            clearInterval(this.analysisInterval);
+            this.analysisInterval = null;
+        }
     }
     
     handleMessage(data) {
@@ -239,7 +306,7 @@ class ZeusAI {
         this.hideLoadingOverlay();
         
         this.showAlert(`🚀 Connected to ${this.currentMarket}!`, 'success');
-        this.logAIActivity('System connected to Deriv API');
+        this.logActivity(`Connected to ${this.currentMarket}`, 'success');
         
         // Subscribe to tick stream
         this.ws.send(JSON.stringify({
@@ -278,19 +345,13 @@ class ZeusAI {
             this.recentDigits.pop();
         }
         
-        // Update UI for all tabs
+        // Update UI
         this.updateDigitDisplay(lastDigit);
         this.updateRecentDigits();
         this.updateMarketInfo();
         
         // Run AI analysis
         this.runAdvancedAnalysis(tickData);
-        
-        // Check for auto trading opportunity
-        if (this.aiEnabled && this.shouldExecuteTrade()) {
-            this.logAIActivity(`Analyzing trade opportunity - Confidence: ${this.currentPrediction?.confidence || 0}%`);
-            setTimeout(() => this.executeAITrade(), 1000);
-        }
     }
     
     handleBalance(balance) {
@@ -301,16 +362,18 @@ class ZeusAI {
     handleTradeResult(data) {
         if (data.error) {
             this.showAlert(`Trade failed: ${data.error.message}`, 'error');
-            this.logAIActivity(`Trade failed: ${data.error.message}`);
+            this.logActivity(`Trade failed: ${data.error.message}`, 'error');
             return;
         }
         
         const contractId = data.buy.contract_id;
-        const contractType = (data.buy.contract_type || '').toLowerCase();
+        const contractType = data.buy.contract_type || '';
+        const direction = contractType.toLowerCase().includes('call') ? 'call' : 'put';
+        
         const trade = {
             id: contractId,
-            type: this.lastAIAction === 'ai_trade' ? 'AI' : 'Manual',
-            direction: contractType.includes('call') ? 'call' : 'put',
+            type: this.currentPrediction && this.currentPrediction.isAI ? 'AI' : 'Manual',
+            direction: direction,
             amount: data.buy.buy_price,
             time: new Date().toLocaleTimeString(),
             status: 'open',
@@ -332,13 +395,10 @@ class ZeusAI {
         
         const tradeType = trade.type === 'AI' ? `🤖 AI ${trade.direction.toUpperCase()}` : `👤 Manual ${trade.direction.toUpperCase()}`;
         this.showAlert(`${tradeType} trade placed!`, 'success');
+        this.logActivity(`${tradeType} trade placed - $${trade.amount.toFixed(2)}`, 'trade');
         
-        if (trade.type === 'AI') {
-            this.logAIActivity(`AI trade executed: ${trade.direction.toUpperCase()} $${trade.amount.toFixed(2)}`);
-        }
-        
-        // Reset AI action flag
-        this.lastAIAction = null;
+        // Reset current prediction
+        this.currentPrediction = null;
     }
     
     handleContractUpdate(data) {
@@ -373,23 +433,22 @@ class ZeusAI {
                 this.stats.winStreak = 0;
             }
             
-            // Update AI statistics if it was an AI trade
+            // Update AI-specific stats
             if (trade.type === 'AI') {
-                this.stats.totalPredictions++;
                 this.stats.aiTrades++;
                 this.stats.aiProfit += profit;
+                if (isWin) {
+                    this.stats.aiWins++;
+                }
                 
+                this.stats.totalPredictions++;
                 if (isWin) {
                     this.stats.correctPredictions++;
-                    this.stats.aiWins++;
                 }
                 this.stats.aiAccuracy = Math.round((this.stats.correctPredictions / this.stats.totalPredictions) * 100);
                 
                 // Update neural network
                 this.updateNeuralNetwork(isWin);
-                
-                const result = isWin ? 'WON' : 'LOST';
-                this.logAIActivity(`AI trade ${result}: ${isWin ? '+' : ''}$${profit.toFixed(2)}`);
             }
             
             this.updateStats();
@@ -401,6 +460,7 @@ class ZeusAI {
                 : `😞 ${trade.type} ${trade.direction.toUpperCase()} LOST. Loss: $${Math.abs(profit).toFixed(2)}`;
             
             this.showAlert(message, isWin ? 'success' : 'error');
+            this.logActivity(message, isWin ? 'success' : 'error');
             
             // Check risk management
             this.riskManager.checkLimits(this.stats.todayProfit, this.config);
@@ -408,7 +468,10 @@ class ZeusAI {
     }
     
     runAdvancedAnalysis(tickData) {
-        if (this.tickHistory.length < 20) return;
+        if (this.tickHistory.length < 20) {
+            this.logActivity('Collecting market data... Need 20+ ticks for analysis', 'analysis');
+            return;
+        }
         
         // Neural network prediction
         const neuralPrediction = this.neuralNetworkPredict();
@@ -432,10 +495,49 @@ class ZeusAI {
         this.updatePredictionDisplay(prediction);
         this.updateAnalyticsDisplay(patterns, signals);
         
-        // Log AI analysis if enabled
-        if (this.aiEnabled && prediction.signal !== 'WAIT') {
-            this.logAIActivity(`Signal detected: ${prediction.signal} (${prediction.confidence}% confidence)`);
+        // Log analysis results
+        this.logActivity(`Analysis: ${prediction.signal} (${prediction.confidence}% confidence)`, 'analysis');
+        
+        // Check for auto trading opportunity
+        if (this.aiEnabled && this.shouldExecuteTrade()) {
+            this.logActivity(`High confidence signal detected! Preparing to trade...`, 'signal');
+            setTimeout(() => this.executeAITrade(), 2000);
+        } else if (this.aiEnabled) {
+            const reason = this.getTradeBlockReason();
+            if (reason) {
+                this.logActivity(`Trade blocked: ${reason}`, 'warning');
+            }
         }
+    }
+    
+    getTradeBlockReason() {
+        if (!this.currentPrediction || this.currentPrediction.signal === 'WAIT') {
+            return 'Low confidence signal';
+        }
+        
+        const now = Date.now();
+        if (now - this.lastTradeTime < this.config.cooldownPeriod) {
+            const remaining = Math.ceil((this.config.cooldownPeriod - (now - this.lastTradeTime)) / 1000);
+            return `Cooldown period (${remaining}s remaining)`;
+        }
+        
+        if (this.openTrades.size > 0) {
+            return 'Active trade in progress';
+        }
+        
+        if (this.tradesThisHour >= this.config.maxTradesPerHour) {
+            return 'Hourly trade limit reached';
+        }
+        
+        if (Math.abs(this.stats.todayProfit) >= this.config.maxDailyLoss && this.stats.todayProfit < 0) {
+            return 'Daily loss limit reached';
+        }
+        
+        if (this.stats.todayProfit >= this.config.takeProfitTarget) {
+            return 'Take profit target reached';
+        }
+        
+        return null;
     }
     
     neuralNetworkPredict() {
@@ -609,7 +711,8 @@ class ZeusAI {
             putProb: Math.round(putProb * 100),
             confidence: Math.round(confidence),
             signal,
-            direction
+            direction,
+            isAI: true
         };
     }
     
@@ -620,31 +723,23 @@ class ZeusAI {
         
         const now = Date.now();
         if (now - this.lastTradeTime < this.config.cooldownPeriod) {
-            this.logAIActivity(`Cooldown period active (${Math.round((this.config.cooldownPeriod - (now - this.lastTradeTime)) / 1000)}s remaining)`);
             return false;
         }
         
         if (this.openTrades.size > 0) {
-            this.logAIActivity('Waiting for current trade to complete');
             return false;
         }
         
         if (this.tradesThisHour >= this.config.maxTradesPerHour) {
-            this.logAIActivity('Maximum trades per hour reached');
             return false;
         }
         
         // Risk management checks
         if (Math.abs(this.stats.todayProfit) >= this.config.maxDailyLoss && this.stats.todayProfit < 0) {
-            this.logAIActivity('Daily loss limit reached - trading disabled');
-            this.aiEnabled = false;
-            document.getElementById('aiTradeToggle').checked = false;
-            this.updateAIStatus();
             return false;
         }
         
         if (this.stats.todayProfit >= this.config.takeProfitTarget) {
-            this.logAIActivity('Take profit target reached');
             return false;
         }
         
@@ -653,6 +748,7 @@ class ZeusAI {
     
     executeAITrade() {
         if (!this.currentPrediction || !this.currentPrediction.direction) {
+            this.logActivity('No valid prediction for AI trade', 'warning');
             return;
         }
         
@@ -663,16 +759,16 @@ class ZeusAI {
             const lastTrade = this.tradeHistory[0];
             if (lastTrade.status === 'loss') {
                 amount = Math.min(amount * 2, this.currentBalance * 0.1);
-                this.logAIActivity(`Martingale applied: Amount increased to $${amount.toFixed(2)}`);
+                this.logActivity(`Martingale applied: Amount increased to $${amount.toFixed(2)}`, 'info');
             }
         }
         
         if (this.config.antiMartingaleEnabled && this.stats.winStreak > 0) {
             amount = Math.min(amount * 1.5, this.currentBalance * 0.05);
-            this.logAIActivity(`Anti-Martingale applied: Amount increased to $${amount.toFixed(2)}`);
+            this.logActivity(`Anti-Martingale applied: Amount increased to $${amount.toFixed(2)}`, 'info');
         }
         
-        this.lastAIAction = 'ai_trade';
+        this.logActivity(`Executing AI trade: ${this.currentPrediction.direction.toUpperCase()} $${amount.toFixed(2)}`, 'trade');
         this.placeTrade(this.currentPrediction.direction, amount, this.config.tradeDuration);
         this.lastTradeTime = Date.now();
         this.tradesThisHour++;
@@ -713,7 +809,7 @@ class ZeusAI {
     handleProposal(data) {
         if (data.error) {
             this.showAlert(`Trade proposal failed: ${data.error.message}`, 'error');
-            this.logAIActivity(`Trade proposal failed: ${data.error.message}`);
+            this.logActivity(`Trade proposal failed: ${data.error.message}`, 'error');
             return;
         }
         
@@ -752,18 +848,30 @@ class ZeusAI {
             this.neuralNetwork.previousWeightDeltas = new Array(this.neuralNetwork.weights.length).fill(0);
         }
         
-        this.logAIActivity(`Neural network updated based on ${won ? 'winning' : 'losing'} trade`);
+        this.logActivity(`Neural network updated based on ${won ? 'winning' : 'losing'} trade`, 'analysis');
     }
     
     initializeAI() {
         document.getElementById('aiStatusText').textContent = 'Online';
         const predictionStatus = document.getElementById('predictionStatus');
-        const predictionStatusAuto = document.getElementById('predictionStatusAuto');
         if (predictionStatus) predictionStatus.textContent = 'AI System Active';
+        
+        const predictionStatusAuto = document.getElementById('predictionStatusAuto');
         if (predictionStatusAuto) predictionStatusAuto.textContent = 'AI System Active';
         
         this.showAlert('🧠 Advanced AI System initialized!', 'success');
-        this.logAIActivity('AI system initialized and ready for trading');
+        this.logActivity('AI System initialized and ready', 'success');
+        
+        // Start continuous analysis when connected
+        if (this.analysisInterval) {
+            clearInterval(this.analysisInterval);
+        }
+        
+        this.analysisInterval = setInterval(() => {
+            if (this.isConnected && this.tickHistory.length >= 20) {
+                this.logActivity('Running continuous market analysis...', 'analysis');
+            }
+        }, 30000); // Log every 30 seconds
     }
     
     toggleAITrade() {
@@ -783,47 +891,7 @@ class ZeusAI {
             ? '🤖 AI Auto Trading ACTIVATED!' 
             : '⏹️ AI Auto Trading DEACTIVATED';
         this.showAlert(message, this.aiEnabled ? 'success' : 'info');
-        
-        if (this.aiEnabled) {
-            this.logAIActivity('AI auto trading activated');
-        } else {
-            this.logAIActivity('AI auto trading deactivated');
-        }
-    }
-    
-    logAIActivity(message) {
-        const timestamp = new Date().toLocaleTimeString();
-        this.aiActivityLog.unshift({ time: timestamp, message });
-        
-        // Keep only last 50 entries
-        if (this.aiActivityLog.length > 50) {
-            this.aiActivityLog.pop();
-        }
-        
-        this.updateAIActivityLog();
-    }
-    
-    updateAIActivityLog() {
-        const container = document.getElementById('aiActivityLog');
-        if (!container) return;
-        
-        if (this.aiActivityLog.length === 0) {
-            container.innerHTML = `
-                <div class="no-activity">
-                    <i class="fas fa-robot"></i>
-                    <p>AI system ready</p>
-                </div>
-            `;
-            return;
-        }
-        
-        container.innerHTML = this.aiActivityLog.slice(0, 20).map(entry => `
-            <div class="activity-item">
-                <i class="fas fa-circle" style="color: var(--brand-primary); font-size: 0.5rem;"></i>
-                <span>${entry.message}</span>
-                <span class="activity-time">${entry.time}</span>
-            </div>
-        `).join('');
+        this.logActivity(message, this.aiEnabled ? 'success' : 'info');
     }
     
     updateConnectionStatus() {
@@ -869,6 +937,21 @@ class ZeusAI {
         if (digitElement) {
             digitElement.textContent = digit;
             digitElement.className = 'current-digit';
+            
+            if (this.currentPrediction) {
+                if (this.currentPrediction.signal === 'CALL') {
+                    digitElement.classList.add('call-signal');
+                    trendElement.innerHTML = '<i class="fas fa-arrow-up"></i>';
+                    trendElement.style.color = 'var(--success)';
+                } else if (this.currentPrediction.signal === 'PUT') {
+                    digitElement.classList.add('put-signal');
+                    trendElement.innerHTML = '<i class="fas fa-arrow-down"></i>';
+                    trendElement.style.color = 'var(--danger)';
+                } else {
+                    trendElement.innerHTML = '<i class="fas fa-minus"></i>';
+                    trendElement.style.color = 'var(--text-secondary)';
+                }
+            }
         }
         
         // Update manual trading tab
@@ -878,95 +961,82 @@ class ZeusAI {
         if (digitElementManual) {
             digitElementManual.textContent = digit;
             digitElementManual.className = 'current-digit';
-        }
-        
-        if (this.currentPrediction) {
-            const trendIcon = this.currentPrediction.signal === 'CALL' ? 
-                '<i class="fas fa-arrow-up"></i>' : 
-                this.currentPrediction.signal === 'PUT' ? 
-                '<i class="fas fa-arrow-down"></i>' : 
-                '<i class="fas fa-minus"></i>';
             
-            const trendColor = this.currentPrediction.signal === 'CALL' ? 
-                'var(--success)' : 
-                this.currentPrediction.signal === 'PUT' ? 
-                'var(--danger)' : 
-                'var(--text-secondary)';
-            
-            if (trendElement) {
-                trendElement.innerHTML = trendIcon;
-                trendElement.style.color = trendColor;
-            }
-            
-            if (trendElementManual) {
-                trendElementManual.innerHTML = trendIcon;
-                trendElementManual.style.color = trendColor;
-            }
-            
-            if (this.currentPrediction.signal === 'CALL') {
-                if (digitElement) digitElement.classList.add('call-signal');
-                if (digitElementManual) digitElementManual.classList.add('call-signal');
-            } else if (this.currentPrediction.signal === 'PUT') {
-                if (digitElement) digitElement.classList.add('put-signal');
-                if (digitElementManual) digitElementManual.classList.add('put-signal');
+            if (this.currentPrediction) {
+                if (this.currentPrediction.signal === 'CALL') {
+                    digitElementManual.classList.add('call-signal');
+                    trendElementManual.innerHTML = '<i class="fas fa-arrow-up"></i>';
+                    trendElementManual.style.color = 'var(--success)';
+                } else if (this.currentPrediction.signal === 'PUT') {
+                    digitElementManual.classList.add('put-signal');
+                    trendElementManual.innerHTML = '<i class="fas fa-arrow-down"></i>';
+                    trendElementManual.style.color = 'var(--danger)';
+                } else {
+                    trendElementManual.innerHTML = '<i class="fas fa-minus"></i>';
+                    trendElementManual.style.color = 'var(--text-secondary)';
+                }
             }
         }
     }
     
     updateRecentDigits() {
-        const container = document.getElementById('recentDigits');
-        const containerManual = document.getElementById('recentDigitsManual');
-        
-        const digitsHTML = this.recentDigits.slice(0, 15).map(digit => 
-            `<div class="recent-digit">${digit}</div>`
-        ).join('');
-        
-        if (container) container.innerHTML = digitsHTML;
-        if (containerManual) containerManual.innerHTML = digitsHTML;
+        const containers = ['recentDigits', 'recentDigitsManual'];
+        containers.forEach(containerId => {
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.innerHTML = this.recentDigits.slice(0, 15).map(digit => 
+                    `<div class="recent-digit">${digit}</div>`
+                ).join('');
+            }
+        });
     }
     
     updatePredictionDisplay(prediction) {
         if (!prediction) return;
         
-        // Update manual tab prediction
-        const predictionDirection = document.getElementById('predictionDirection');
-        const predictionConfidence = document.getElementById('predictionConfidence');
-        const callProbValue = document.getElementById('callProbValue');
-        const putProbValue = document.getElementById('putProbValue');
-        const callProbBar = document.getElementById('callProbBar');
-        const putProbBar = document.getElementById('putProbBar');
-        const callBtnProb = document.getElementById('callBtnProb');
-        const putBtnProb = document.getElementById('putBtnProb');
+        // Update manual trading tab
+        this.updatePredictionElements('', prediction);
         
-        if (predictionDirection) {
-            predictionDirection.textContent = prediction.signal;
-            predictionDirection.className = `prediction-direction ${prediction.direction || ''}`;
+        // Update auto trading tab
+        this.updatePredictionElements('Auto', prediction);
+    }
+    
+    updatePredictionElements(suffix, prediction) {
+        // Update main prediction
+        const directionElement = document.getElementById(`predictionDirection${suffix}`);
+        const confidenceElement = document.getElementById(`predictionConfidence${suffix}`);
+        
+        if (directionElement) {
+            directionElement.textContent = prediction.signal;
+            directionElement.className = `prediction-direction ${prediction.direction || ''}`;
         }
-        if (predictionConfidence) predictionConfidence.textContent = `${prediction.confidence}%`;
-        if (callProbValue) callProbValue.textContent = `${prediction.callProb}%`;
-        if (putProbValue) putProbValue.textContent = `${prediction.putProb}%`;
-        if (callProbBar) callProbBar.style.width = `${prediction.callProb}%`;
-        if (putProbBar) putProbBar.style.width = `${prediction.putProb}%`;
-        if (callBtnProb) callBtnProb.textContent = `${prediction.callProb}%`;
-        if (putBtnProb) putBtnProb.textContent = `${prediction.putProb}%`;
         
-        // Update auto tab prediction
-        const predictionDirectionAuto = document.getElementById('predictionDirectionAuto');
-        const predictionConfidenceAuto = document.getElementById('predictionConfidenceAuto');
-        const callProbValueAuto = document.getElementById('callProbValueAuto');
-        const putProbValueAuto = document.getElementById('putProbValueAuto');
-        const callProbBarAuto = document.getElementById('callProbBarAuto');
-        const putProbBarAuto = document.getElementById('putProbBarAuto');
-        
-        if (predictionDirectionAuto) {
-            predictionDirectionAuto.textContent = prediction.signal;
-            predictionDirectionAuto.className = `prediction-direction ${prediction.direction || ''}`;
+        if (confidenceElement) {
+            confidenceElement.textContent = `${prediction.confidence}%`;
         }
-        if (predictionConfidenceAuto) predictionConfidenceAuto.textContent = `${prediction.confidence}%`;
-        if (callProbValueAuto) callProbValueAuto.textContent = `${prediction.callProb}%`;
-        if (putProbValueAuto) putProbValueAuto.textContent = `${prediction.putProb}%`;
-        if (callProbBarAuto) callProbBarAuto.style.width = `${prediction.callProb}%`;
-        if (putProbBarAuto) putProbBarAuto.style.width = `${prediction.putProb}%`;
+        
+        // Update probability values
+        const callProbElement = document.getElementById(`callProbValue${suffix}`);
+        const putProbElement = document.getElementById(`putProbValue${suffix}`);
+        
+        if (callProbElement) callProbElement.textContent = `${prediction.callProb}%`;
+        if (putProbElement) putProbElement.textContent = `${prediction.putProb}%`;
+        
+        // Update probability bars
+        const callBarElement = document.getElementById(`callProbBar${suffix}`);
+        const putBarElement = document.getElementById(`putProbBar${suffix}`);
+        
+        if (callBarElement) callBarElement.style.width = `${prediction.callProb}%`;
+        if (putBarElement) putBarElement.style.width = `${prediction.putProb}%`;
+        
+        // Update manual trade button probabilities (only for manual tab)
+        if (!suffix) {
+            const callBtnProb = document.getElementById('callBtnProb');
+            const putBtnProb = document.getElementById('putBtnProb');
+            
+            if (callBtnProb) callBtnProb.textContent = `${prediction.callProb}%`;
+            if (putBtnProb) putBtnProb.textContent = `${prediction.putProb}%`;
+        }
     }
     
     updateAnalyticsDisplay(patterns, signals) {
@@ -1001,6 +1071,7 @@ class ZeusAI {
                 var(--card-bg) 360deg
             )`;
         }
+        
         if (signalStrengthValue) signalStrengthValue.textContent = `${Math.round(overallSignal)}%`;
         
         // Update indicators
@@ -1008,60 +1079,16 @@ class ZeusAI {
         this.updateIndicator('momentumIndicator', signals.momentum > 0.5);
         this.updateIndicator('volumeIndicator', this.volatilityIndex > 50);
         
-        // Update market analysis
-        const volatilityIndex = document.getElementById('volatilityIndex');
-        const trendStrengthValue = document.getElementById('trendStrengthValue');
-        const supportLevel = document.getElementById('supportLevel');
-        const resistanceLevel = document.getElementById('resistanceLevel');
+        // Update analytics sidebar
+        const volatilityIndexElement = document.getElementById('volatilityIndex');
+        const trendStrengthValueElement = document.getElementById('trendStrengthValue');
+        const supportLevelElement = document.getElementById('supportLevel');
+        const resistanceLevelElement = document.getElementById('resistanceLevel');
         
-        if (volatilityIndex) volatilityIndex.textContent = `${Math.round(this.volatilityIndex)}%`;
-        if (trendStrengthValue) trendStrengthValue.textContent = `${Math.round(signals.trendStrength * 100)}%`;
-        if (supportLevel) supportLevel.textContent = this.findSupportLevel();
-        if (resistanceLevel) resistanceLevel.textContent = this.findResistanceLevel();
-    }
-    
-    findSupportLevel() {
-        if (this.recentDigits.length < 20) return '-';
-        const recent20 = this.recentDigits.slice(0, 20);
-        const digitCounts = {};
-        
-        recent20.forEach(digit => {
-            digitCounts[digit] = (digitCounts[digit] || 0) + 1;
-        });
-        
-        let maxCount = 0;
-        let supportLevel = 0;
-        
-        for (let digit = 0; digit <= 4; digit++) {
-            if (digitCounts[digit] > maxCount) {
-                maxCount = digitCounts[digit];
-                supportLevel = digit;
-            }
-        }
-        
-        return supportLevel;
-    }
-    
-    findResistanceLevel() {
-        if (this.recentDigits.length < 20) return '-';
-        const recent20 = this.recentDigits.slice(0, 20);
-        const digitCounts = {};
-        
-        recent20.forEach(digit => {
-            digitCounts[digit] = (digitCounts[digit] || 0) + 1;
-        });
-        
-        let maxCount = 0;
-        let resistanceLevel = 9;
-        
-        for (let digit = 5; digit <= 9; digit++) {
-            if (digitCounts[digit] > maxCount) {
-                maxCount = digitCounts[digit];
-                resistanceLevel = digit;
-            }
-        }
-        
-        return resistanceLevel;
+        if (volatilityIndexElement) volatilityIndexElement.textContent = `${Math.round(this.volatilityIndex)}%`;
+        if (trendStrengthValueElement) trendStrengthValueElement.textContent = `${Math.round(signals.trendStrength * 100)}%`;
+        if (supportLevelElement) supportLevelElement.textContent = this.signalProcessor.findSupportLevel(this.recentDigits);
+        if (resistanceLevelElement) resistanceLevelElement.textContent = this.signalProcessor.findResistanceLevel(this.recentDigits);
     }
     
     updateIndicator(id, active) {
@@ -1096,58 +1123,58 @@ class ZeusAI {
     
     updateStats() {
         // Header stats
-        const totalProfit = document.getElementById('totalProfit');
-        const winStreakDisplay = document.getElementById('winStreakDisplay');
-        const aiAccuracyHeader = document.getElementById('aiAccuracyHeader');
+        const totalProfitElement = document.getElementById('totalProfit');
+        const winStreakDisplayElement = document.getElementById('winStreakDisplay');
+        const aiAccuracyHeaderElement = document.getElementById('aiAccuracyHeader');
         
-        if (totalProfit) totalProfit.textContent = `$${this.stats.totalProfit.toFixed(2)}`;
-        if (winStreakDisplay) winStreakDisplay.textContent = this.stats.winStreak;
-        if (aiAccuracyHeader) aiAccuracyHeader.textContent = `${this.stats.aiAccuracy}%`;
+        if (totalProfitElement) totalProfitElement.textContent = `$${this.stats.totalProfit.toFixed(2)}`;
+        if (winStreakDisplayElement) winStreakDisplayElement.textContent = this.stats.winStreak;
+        if (aiAccuracyHeaderElement) aiAccuracyHeaderElement.textContent = `${this.stats.aiAccuracy}%`;
         
         // Balance
-        const currentBalance = document.getElementById('currentBalance');
-        if (currentBalance) currentBalance.textContent = `$${this.currentBalance.toFixed(2)}`;
+        const currentBalanceElement = document.getElementById('currentBalance');
+        if (currentBalanceElement) currentBalanceElement.textContent = `$${this.currentBalance.toFixed(2)}`;
         
         // Stats grid
-        const todayProfitStat = document.getElementById('todayProfitStat');
-        const totalTradesStat = document.getElementById('totalTradesStat');
-        const winRateStat = document.getElementById('winRateStat');
-        const currentStreak = document.getElementById('currentStreak');
+        const todayProfitStatElement = document.getElementById('todayProfitStat');
+        const totalTradesStatElement = document.getElementById('totalTradesStat');
+        const currentStreakElement = document.getElementById('currentStreak');
         
-        if (todayProfitStat) todayProfitStat.textContent = `$${this.stats.todayProfit.toFixed(2)}`;
-        if (totalTradesStat) totalTradesStat.textContent = this.stats.totalTrades;
-        if (currentStreak) currentStreak.textContent = this.stats.winStreak;
+        if (todayProfitStatElement) todayProfitStatElement.textContent = `$${this.stats.todayProfit.toFixed(2)}`;
+        if (totalTradesStatElement) totalTradesStatElement.textContent = this.stats.totalTrades;
+        if (currentStreakElement) currentStreakElement.textContent = this.stats.winStreak;
         
         const winRate = this.stats.totalTrades > 0 ? 
             Math.round((this.stats.winningTrades / this.stats.totalTrades) * 100) : 0;
-        if (winRateStat) winRateStat.textContent = `${winRate}%`;
+        const winRateStatElement = document.getElementById('winRateStat');
+        if (winRateStatElement) winRateStatElement.textContent = `${winRate}%`;
         
-        // AI specific stats
-        const aiWinRate = document.getElementById('aiWinRate');
-        const aiTotalTrades = document.getElementById('aiTotalTrades');
-        const aiProfit = document.getElementById('aiProfit');
+        // AI-specific stats
+        const aiWinRateElement = document.getElementById('aiWinRate');
+        const aiTotalTradesElement = document.getElementById('aiTotalTrades');
+        const aiProfitElement = document.getElementById('aiProfit');
         
-        const aiWinRateValue = this.stats.aiTrades > 0 ? 
+        const aiWinRate = this.stats.aiTrades > 0 ? 
             Math.round((this.stats.aiWins / this.stats.aiTrades) * 100) : 0;
         
-        if (aiWinRate) aiWinRate.textContent = `${aiWinRateValue}%`;
-        if (aiTotalTrades) aiTotalTrades.textContent = this.stats.aiTrades;
-        if (aiProfit) aiProfit.textContent = `$${this.stats.aiProfit.toFixed(2)}`;
+        if (aiWinRateElement) aiWinRateElement.textContent = `${aiWinRate}%`;
+        if (aiTotalTradesElement) aiTotalTradesElement.textContent = this.stats.aiTrades;
+        if (aiProfitElement) aiProfitElement.textContent = `$${this.stats.aiProfit.toFixed(2)}`;
         
         // Summary stats
-        const summaryTotalTrades = document.getElementById('summaryTotalTrades');
-        const summaryWinningTrades = document.getElementById('summaryWinningTrades');
-        const summaryLosingTrades = document.getElementById('summaryLosingTrades');
-        const summaryWinRate = document.getElementById('summaryWinRate');
-        const summaryTotalProfit = document.getElementById('summaryTotalProfit');
-        const summaryBestStreak = document.getElementById('summaryBestStreak');
+        const summaryElements = {
+            summaryTotalTrades: this.stats.totalTrades,
+            summaryWinningTrades: this.stats.winningTrades,
+            summaryLosingTrades: this.stats.losingTrades,
+            summaryWinRate: `${winRate}%`,
+            summaryTotalProfit: `$${this.stats.totalProfit.toFixed(2)}`,
+            summaryBestStreak: this.stats.maxWinStreak
+        };
         
-        if (summaryTotalTrades) summaryTotalTrades.textContent = this.stats.totalTrades;
-        if (summaryWinningTrades) summaryWinningTrades.textContent = this.stats.winningTrades;
-        if (summaryLosingTrades) summaryLosingTrades.textContent = this.stats.losingTrades;
-        if (summaryWinRate) summaryWinRate.textContent = `${winRate}%`;
-        if (summaryTotalProfit) summaryTotalProfit.textContent = `$${this.stats.totalProfit.toFixed(2)}`;
-        if (summaryBestStreak) summaryBestStreak.textContent = this.stats.maxWinStreak;
+        Object.entries(summaryElements).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) element.textContent = value;
+        });
     }
     
     updateMarketInfo() {
@@ -1160,9 +1187,9 @@ class ZeusAI {
         const hours = Math.floor(uptime / 3600000);
         const minutes = Math.floor((uptime % 3600000) / 60000);
         const seconds = Math.floor((uptime % 60000) / 1000);
-        const sessionUptime = document.getElementById('sessionUptime');
-        if (sessionUptime) {
-            sessionUptime.textContent = 
+        const sessionUptimeElement = document.getElementById('sessionUptime');
+        if (sessionUptimeElement) {
+            sessionUptimeElement.textContent = 
                 `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         }
     }
@@ -1171,9 +1198,9 @@ class ZeusAI {
         const container = document.getElementById('liveTradesList');
         if (!container) return;
         
-        const openTrades = Array.from(this.openTrades.values());
+        const liveTrades = Array.from(this.openTrades.values());
         
-        if (openTrades.length === 0) {
+        if (liveTrades.length === 0) {
             container.innerHTML = `
                 <div class="no-trades">
                     <i class="fas fa-chart-line"></i>
@@ -1183,8 +1210,8 @@ class ZeusAI {
             return;
         }
         
-        container.innerHTML = openTrades.map(trade => `
-            <div class="trade-item open">
+        container.innerHTML = liveTrades.map(trade => `
+            <div class="trade-item ${trade.status}">
                 <div class="trade-icon ${trade.direction}">
                     <i class="fas fa-arrow-${trade.direction === 'call' ? 'up' : 'down'}"></i>
                 </div>
@@ -1194,7 +1221,7 @@ class ZeusAI {
                 </div>
                 <div class="trade-result">
                     <div class="trade-amount">$${trade.amount.toFixed(2)}</div>
-                    <div class="trade-profit pending">OPEN</div>
+                    <div class="trade-profit pending">LIVE</div>
                 </div>
             </div>
         `).join('');
@@ -1274,14 +1301,15 @@ class ZeusAI {
     startMarketClock() {
         setInterval(() => {
             const now = new Date();
-            const serverTime = document.getElementById('serverTime');
-            if (serverTime) serverTime.textContent = now.toLocaleTimeString();
+            const serverTimeElement = document.getElementById('serverTime');
+            if (serverTimeElement) serverTimeElement.textContent = now.toLocaleTimeString();
             this.updateMarketInfo();
         }, 1000);
         
         // Reset hourly trade counter
         setInterval(() => {
             this.tradesThisHour = 0;
+            this.logActivity('Hourly trade counter reset', 'info');
         }, 3600000);
     }
     
@@ -1427,12 +1455,12 @@ class RiskManager {
             zeus.aiEnabled = false;
             document.getElementById('aiTradeToggle').checked = false;
             zeus.updateAIStatus();
-            zeus.logAIActivity('Daily loss limit reached - auto trading disabled');
+            zeus.logActivity('Daily loss limit reached - Auto trading disabled', 'warning');
         }
         
         if (todayProfit >= config.takeProfitTarget) {
             zeus.showAlert('🎯 Take profit target reached! Consider stopping for today.', 'success');
-            zeus.logAIActivity('Take profit target reached');
+            zeus.logActivity('Take profit target reached!', 'success');
         }
     }
 }
@@ -1575,6 +1603,7 @@ function toggleAITrade() {
 function placeManualTrade(direction) {
     const amount = parseFloat(document.getElementById('manualTradeAmount').value);
     const duration = parseInt(document.getElementById('manualTradeDuration').value);
+    zeus.currentPrediction = { isAI: false }; // Mark as manual trade
     zeus.placeTrade(direction, amount, duration);
 }
 
@@ -1607,6 +1636,12 @@ function switchAnalyticsTab(tabName) {
     document.getElementById(`${tabName}-tab`).classList.add('active');
 }
 
+function updateConfidenceDisplay() {
+    const value = document.getElementById('minConfidence').value;
+    document.getElementById('confidenceValue').textContent = value + '%';
+    zeus.config.minConfidence = parseInt(value);
+}
+
 function togglePassword() {
     const input = document.getElementById('apiToken');
     const icon = document.getElementById('passwordToggle');
@@ -1618,13 +1653,6 @@ function togglePassword() {
         input.type = 'password';
         icon.className = 'fas fa-eye';
     }
-}
-
-function updateConfidenceDisplay() {
-    const slider = document.getElementById('minConfidence');
-    const display = document.getElementById('confidenceValue');
-    display.textContent = slider.value + '%';
-    zeus.config.minConfidence = parseInt(slider.value);
 }
 
 function filterHistory(filter) {
@@ -1690,6 +1718,7 @@ function clearHistory() {
         zeus.tradeHistory = [];
         zeus.renderTradeHistory();
         zeus.showAlert('Trade history cleared', 'info');
+        zeus.logActivity('Trade history cleared', 'info');
     }
 }
 
@@ -1714,6 +1743,7 @@ function exportHistory() {
     document.body.removeChild(link);
     
     zeus.showAlert('Trade history exported successfully', 'success');
+    zeus.logActivity('Trade history exported', 'info');
 }
 
 // Initialize Zeus AI System
@@ -1723,4 +1753,5 @@ const zeus = new ZeusAI();
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Zeus Ultimate AI Trading System Initialized');
     zeus.showAlert('🚀 Zeus Ultimate AI System Ready!', 'info');
+    zeus.logActivity('System initialized and ready', 'success');
 });
