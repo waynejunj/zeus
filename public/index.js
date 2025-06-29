@@ -318,10 +318,15 @@ class ZeusAI {
         
         const contractId = data.buy.contract_id;
         const isAITrade = this.currentPrediction && this.aiEnabled;
+        
+        // Safely handle contract_type with proper null checking
+        const contractType = data.buy.contract_type || '';
+        const direction = contractType.toLowerCase().includes('call') ? 'call' : 'put';
+        
         const trade = {
             id: contractId,
             type: isAITrade ? 'AI' : 'Manual',
-            direction: data.buy.contract_type.toLowerCase().includes('call') ? 'call' : 'put',
+            direction: direction,
             amount: data.buy.buy_price,
             time: new Date().toLocaleTimeString(),
             status: 'open',
