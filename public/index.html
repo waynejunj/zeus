@@ -4,218 +4,472 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
-    <title>Zeus Trading Bot</title>
+    <title>Zeus Ultimate AI Trading System</title>
     <link rel="stylesheet" href="./index.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
     <div class="container">
+        <!-- Header with Advanced Stats -->
         <div class="header">
-            <h1>🧠 Zeus Trading Bot</h1>
-            <p>Advanced AI Trading System with Smart Call/Put Predictions</p>
-        </div>
-
-        <!-- Main Trading Dashboard -->
-        <div class="trading-dashboard">
-            <!-- Left Panel - Connection & Controls -->
-            <div class="control-panel">
-                <div class="card">
-                    <h3>🔗 Connection</h3>
-                    <div class="connection-status">
-                        <div class="status-indicator" id="connectionStatus"></div>
-                        <span id="connectionText">Disconnected</span>
+            <div class="header-content">
+                <div class="logo-section">
+                    <h1><i class="fas fa-brain"></i> Zeus Ultimate AI</h1>
+                    <p>Advanced Neural Network Trading System</p>
+                </div>
+                <div class="header-stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalProfit">$0.00</div>
+                        <div class="stat-label">Total Profit</div>
                     </div>
-
-                    <div class="input-group">
-                        <label for="appId">App ID:</label>
-                        <input type="text" id="appId" placeholder="Enter App ID" value="1089">
+                    <div class="stat-card">
+                        <div class="stat-value" id="winStreakDisplay">0</div>
+                        <div class="stat-label">Win Streak</div>
                     </div>
-
-                    <div class="input-group">
-                        <label for="apiToken">API Token:</label>
-                        <input type="password" id="apiToken" placeholder="Enter API Token">
-                    </div>
-
-                    <div class="input-group">
-                        <label for="marketSelect">Market:</label>
-                        <select id="marketSelect">
-                            <option value="R_10">Volatility 10</option>
-                            <option value="R_25">Volatility 25</option>
-                            <option value="R_50">Volatility 50</option>
-                            <option value="R_75" selected>Volatility 75</option>
-                            <option value="R_100">Volatility 100</option>
-                        </select>
-                    </div>
-
-                    <div class="button-group">
-                        <button class="btn btn-primary" id="connectBtn" onclick="connect()">Connect</button>
-                        <button class="btn btn-danger" id="disconnectBtn" onclick="disconnect()" style="display: none;">Disconnect</button>
+                    <div class="stat-card">
+                        <div class="stat-value" id="aiAccuracyHeader">0%</div>
+                        <div class="stat-label">AI Accuracy</div>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <!-- Auto Trade Controls -->
-                <div class="card">
-                    <h3>🤖 Auto Trade</h3>
-                    <div class="auto-trade-toggle">
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="aiTradeToggle" onchange="toggleAITrade()">
-                            <span class="slider"></span>
-                        </label>
-                        <span><strong>Status:</strong> <span id="aiTradeStatus">OFF</span></span>
+        <!-- Main Trading Interface -->
+        <div class="trading-interface">
+            <!-- Left Sidebar - Controls -->
+            <div class="sidebar left-sidebar">
+                <!-- Connection Panel -->
+                <div class="panel connection-panel">
+                    <div class="panel-header">
+                        <i class="fas fa-plug"></i>
+                        <h3>Connection</h3>
+                        <div class="connection-status">
+                            <div class="status-dot" id="connectionDot"></div>
+                            <span id="connectionText">Offline</span>
+                        </div>
                     </div>
-
-                    <div class="input-group">
-                        <label for="tradeAmount">Amount ($):</label>
-                        <input type="number" id="tradeAmount" value="2" min="0.35" step="0.01">
-                    </div>
-
-                    <div class="input-group">
-                        <label for="tradeDuration">Duration:</label>
-                        <select id="tradeDuration">
-                            <option value="1">1 tick</option>
-                            <option value="2">2 ticks</option>
-                            <option value="3">3 ticks</option>
-                            <option value="5" selected>5 ticks</option>
-                        </select>
-                    </div>
-
-                    <div class="input-group">
-                        <label for="minConfidence">Min Confidence:</label>
-                        <input type="range" id="minConfidence" min="60" max="95" value="75" oninput="updateConfidenceDisplay()">
-                        <div class="confidence-display">
-                            <span id="confidenceDisplay">75%</span>
+                    <div class="panel-content">
+                        <div class="input-group">
+                            <label><i class="fas fa-key"></i> App ID</label>
+                            <input type="text" id="appId" placeholder="Enter App ID" value="1089">
+                        </div>
+                        <div class="input-group">
+                            <label><i class="fas fa-lock"></i> API Token</label>
+                            <input type="password" id="apiToken" placeholder="Enter API Token">
+                            <button class="toggle-password" onclick="togglePassword()">
+                                <i class="fas fa-eye" id="passwordToggle"></i>
+                            </button>
+                        </div>
+                        <div class="input-group">
+                            <label><i class="fas fa-chart-line"></i> Market</label>
+                            <select id="marketSelect">
+                                <option value="R_10">Volatility 10 (1s)</option>
+                                <option value="R_25">Volatility 25 (1s)</option>
+                                <option value="R_50">Volatility 50 (1s)</option>
+                                <option value="R_75" selected>Volatility 75 (1s)</option>
+                                <option value="R_100">Volatility 100 (1s)</option>
+                                <option value="1HZ10V">Volatility 10 (0.1s)</option>
+                                <option value="1HZ25V">Volatility 25 (0.1s)</option>
+                                <option value="1HZ50V">Volatility 50 (0.1s)</option>
+                                <option value="1HZ75V">Volatility 75 (0.1s)</option>
+                                <option value="1HZ100V">Volatility 100 (0.1s)</option>
+                            </select>
+                        </div>
+                        <div class="button-group">
+                            <button class="btn btn-primary" id="connectBtn" onclick="connect()">
+                                <i class="fas fa-play"></i> Connect
+                            </button>
+                            <button class="btn btn-danger" id="disconnectBtn" onclick="disconnect()" style="display: none;">
+                                <i class="fas fa-stop"></i> Disconnect
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Manual Trade -->
-                <div class="card">
-                    <h3>👤 Manual Trade</h3>
-                    <div class="manual-trade-buttons">
-                        <button class="btn btn-success" onclick="placeManualTrade('call')" id="callBtn">
-                            📈 CALL
-                        </button>
-                        <button class="btn btn-danger" onclick="placeManualTrade('put')" id="putBtn">
-                            📉 PUT
-                        </button>
+                <!-- AI Trading Panel -->
+                <div class="panel ai-panel">
+                    <div class="panel-header">
+                        <i class="fas fa-robot"></i>
+                        <h3>AI Trading System</h3>
+                        <div class="ai-status-indicator">
+                            <div class="ai-pulse" id="aiPulse"></div>
+                            <span id="aiStatusText">Offline</span>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div class="ai-toggle-section">
+                            <div class="toggle-container">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="aiTradeToggle" onchange="toggleAITrade()">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <div class="toggle-info">
+                                    <span class="toggle-label">Auto Trading</span>
+                                    <span class="toggle-status" id="aiTradeStatus">OFF</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="trading-config">
+                            <div class="config-row">
+                                <div class="input-group">
+                                    <label><i class="fas fa-dollar-sign"></i> Amount</label>
+                                    <input type="number" id="tradeAmount" value="2" min="0.35" step="0.01">
+                                </div>
+                                <div class="input-group">
+                                    <label><i class="fas fa-clock"></i> Duration</label>
+                                    <select id="tradeDuration">
+                                        <option value="1">1 tick</option>
+                                        <option value="2">2 ticks</option>
+                                        <option value="3">3 ticks</option>
+                                        <option value="5" selected>5 ticks</option>
+                                        <option value="10">10 ticks</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="confidence-section">
+                                <label><i class="fas fa-percentage"></i> Min Confidence: <span id="confidenceValue">75%</span></label>
+                                <input type="range" id="minConfidence" min="60" max="95" value="75" oninput="updateConfidenceDisplay()">
+                                <div class="confidence-markers">
+                                    <span>60%</span>
+                                    <span>75%</span>
+                                    <span>95%</span>
+                                </div>
+                            </div>
+
+                            <div class="risk-management">
+                                <h4><i class="fas fa-shield-alt"></i> Risk Management</h4>
+                                <div class="config-row">
+                                    <div class="input-group">
+                                        <label>Max Loss/Day</label>
+                                        <input type="number" id="maxDailyLoss" value="50" min="10" step="5">
+                                    </div>
+                                    <div class="input-group">
+                                        <label>Take Profit</label>
+                                        <input type="number" id="takeProfitTarget" value="100" min="20" step="10">
+                                    </div>
+                                </div>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="martingaleEnabled">
+                                        <span class="checkmark"></span>
+                                        Enable Martingale
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="antiMartingaleEnabled">
+                                        <span class="checkmark"></span>
+                                        Enable Anti-Martingale
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manual Trading Panel -->
+                <div class="panel manual-panel">
+                    <div class="panel-header">
+                        <i class="fas fa-hand-paper"></i>
+                        <h3>Manual Trading</h3>
+                    </div>
+                    <div class="panel-content">
+                        <div class="manual-buttons">
+                            <button class="btn btn-call" onclick="placeManualTrade('call')" id="callBtn">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>CALL</span>
+                                <div class="btn-probability" id="callBtnProb">50%</div>
+                            </button>
+                            <button class="btn btn-put" onclick="placeManualTrade('put')" id="putBtn">
+                                <i class="fas fa-arrow-down"></i>
+                                <span>PUT</span>
+                                <div class="btn-probability" id="putBtnProb">50%</div>
+                            </button>
+                        </div>
+                        <div class="quick-amounts">
+                            <button class="amount-btn" onclick="setQuickAmount(1)">$1</button>
+                            <button class="amount-btn" onclick="setQuickAmount(2)">$2</button>
+                            <button class="amount-btn" onclick="setQuickAmount(5)">$5</button>
+                            <button class="amount-btn" onclick="setQuickAmount(10)">$10</button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Center Panel - AI Analysis & Current Digit -->
-            <div class="analysis-panel">
-                <div class="card">
-                    <div class="current-digit-section">
-                        <div class="current-digit" id="currentDigit">-</div>
+            <!-- Center - Main Display -->
+            <div class="main-display">
+                <!-- Current Digit Display -->
+                <div class="digit-display-section">
+                    <div class="current-digit-container">
                         <div class="digit-label">Last Digit</div>
+                        <div class="current-digit" id="currentDigit">-</div>
+                        <div class="digit-trend" id="digitTrend">
+                            <i class="fas fa-minus"></i>
+                        </div>
+                    </div>
+                    <div class="recent-digits-container">
+                        <div class="recent-digits-label">Recent History</div>
                         <div class="recent-digits" id="recentDigits"></div>
-                    </div>
-
-                    <div class="ai-prediction-box" id="predictionDisplay">
-                        <div class="ai-status">
-                            <div class="ai-indicator"></div>
-                            <span id="aiStatus">Initializing...</span>
-                        </div>
-                        <div class="prediction-content">
-                            <div class="prediction-main">
-                                <strong>AI Prediction:</strong> <span id="aiPrediction">Analyzing...</span>
-                            </div>
-                            <div class="prediction-details">
-                                <span><strong>Confidence:</strong> <span id="aiConfidence">0%</span></span>
-                                <span><strong>Signal:</strong> <span id="aiSignal">WAIT</span></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="probability-bars">
-                        <div class="prob-bar">
-                            <label>CALL Probability</label>
-                            <div class="prob-fill-container">
-                                <div class="prob-fill call-fill" id="callProbBar" style="width: 50%"></div>
-                            </div>
-                            <span id="callProbability">50%</span>
-                        </div>
-                        <div class="prob-bar">
-                            <label>PUT Probability</label>
-                            <div class="prob-fill-container">
-                                <div class="prob-fill put-fill" id="putProbBar" style="width: 50%"></div>
-                            </div>
-                            <span id="putProbability">50%</span>
-                        </div>
                     </div>
                 </div>
 
-                <!-- Market Analysis -->
-                <div class="card">
-                    <h3>📊 Market Analysis</h3>
-                    <div class="market-stats">
-                        <div class="stat-row">
-                            <span>Trend:</span>
-                            <span id="marketTrend">Neutral</span>
+                <!-- AI Prediction Display -->
+                <div class="prediction-display">
+                    <div class="prediction-header">
+                        <div class="ai-brain-icon">
+                            <i class="fas fa-brain"></i>
                         </div>
-                        <div class="stat-row">
-                            <span>Volatility:</span>
-                            <span id="marketVolatility">Medium</span>
-                        </div>
-                        <div class="stat-row">
-                            <span>Pattern:</span>
-                            <span id="patternType">Analyzing...</span>
+                        <div class="prediction-title">
+                            <h3>AI Neural Network Analysis</h3>
+                            <div class="prediction-status" id="predictionStatus">Analyzing...</div>
                         </div>
                     </div>
                     
-                    <div class="signal-strength">
-                        <label>Signal Strength</label>
-                        <div class="strength-bar">
-                            <div class="strength-fill" id="signalStrength" style="width: 0%"></div>
+                    <div class="prediction-content">
+                        <div class="main-prediction" id="mainPrediction">
+                            <div class="prediction-direction" id="predictionDirection">ANALYZING</div>
+                            <div class="prediction-confidence" id="predictionConfidence">0%</div>
                         </div>
-                        <span id="strengthPercent">0%</span>
+                        
+                        <div class="probability-display">
+                            <div class="prob-item call-prob">
+                                <div class="prob-icon"><i class="fas fa-arrow-up"></i></div>
+                                <div class="prob-info">
+                                    <div class="prob-label">CALL</div>
+                                    <div class="prob-value" id="callProbValue">50%</div>
+                                </div>
+                                <div class="prob-bar">
+                                    <div class="prob-fill call-fill" id="callProbBar"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="prob-item put-prob">
+                                <div class="prob-icon"><i class="fas fa-arrow-down"></i></div>
+                                <div class="prob-info">
+                                    <div class="prob-label">PUT</div>
+                                    <div class="prob-value" id="putProbValue">50%</div>
+                                </div>
+                                <div class="prob-bar">
+                                    <div class="prob-fill put-fill" id="putProbBar"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Analytics -->
+                <div class="analytics-section">
+                    <div class="analytics-tabs">
+                        <button class="tab-btn active" onclick="switchTab('patterns')">
+                            <i class="fas fa-chart-area"></i> Patterns
+                        </button>
+                        <button class="tab-btn" onclick="switchTab('sentiment')">
+                            <i class="fas fa-heart-pulse"></i> Sentiment
+                        </button>
+                        <button class="tab-btn" onclick="switchTab('signals')">
+                            <i class="fas fa-satellite-dish"></i> Signals
+                        </button>
+                    </div>
+                    
+                    <div class="tab-content active" id="patterns-tab">
+                        <div class="pattern-analysis">
+                            <div class="pattern-item">
+                                <span class="pattern-label">Trend Direction</span>
+                                <span class="pattern-value" id="trendDirection">Neutral</span>
+                            </div>
+                            <div class="pattern-item">
+                                <span class="pattern-label">Volatility Level</span>
+                                <span class="pattern-value" id="volatilityLevel">Medium</span>
+                            </div>
+                            <div class="pattern-item">
+                                <span class="pattern-label">Pattern Strength</span>
+                                <div class="strength-bar">
+                                    <div class="strength-fill" id="patternStrength"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="sentiment-tab">
+                        <div class="sentiment-analysis">
+                            <div class="sentiment-item bullish">
+                                <div class="sentiment-icon"><i class="fas fa-bull"></i></div>
+                                <div class="sentiment-info">
+                                    <div class="sentiment-label">Bullish</div>
+                                    <div class="sentiment-value" id="bullishSentiment">0%</div>
+                                </div>
+                            </div>
+                            <div class="sentiment-item bearish">
+                                <div class="sentiment-icon"><i class="fas fa-bear"></i></div>
+                                <div class="sentiment-info">
+                                    <div class="sentiment-label">Bearish</div>
+                                    <div class="sentiment-value" id="bearishSentiment">0%</div>
+                                </div>
+                            </div>
+                            <div class="sentiment-item neutral">
+                                <div class="sentiment-icon"><i class="fas fa-balance-scale"></i></div>
+                                <div class="sentiment-info">
+                                    <div class="sentiment-label">Neutral</div>
+                                    <div class="sentiment-value" id="neutralSentiment">0%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="signals-tab">
+                        <div class="signals-analysis">
+                            <div class="signal-strength-display">
+                                <div class="signal-meter">
+                                    <div class="meter-fill" id="signalMeter"></div>
+                                    <div class="meter-value" id="signalStrengthValue">0%</div>
+                                </div>
+                                <div class="signal-label">Overall Signal Strength</div>
+                            </div>
+                            <div class="signal-indicators">
+                                <div class="indicator" id="trendIndicator">
+                                    <i class="fas fa-trending-up"></i>
+                                    <span>Trend</span>
+                                </div>
+                                <div class="indicator" id="momentumIndicator">
+                                    <i class="fas fa-rocket"></i>
+                                    <span>Momentum</span>
+                                </div>
+                                <div class="indicator" id="volumeIndicator">
+                                    <i class="fas fa-chart-bar"></i>
+                                    <span>Volume</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Right Panel - Stats & History -->
-            <div class="stats-panel">
-                <div class="card">
-                    <h3>📈 Account Stats</h3>
-                    <div class="stats-grid">
-                        <div class="stat-item">
-                            <div class="stat-value" id="balance">$0.00</div>
-                            <div class="stat-label">Balance</div>
+            <!-- Right Sidebar - Stats & History -->
+            <div class="sidebar right-sidebar">
+                <!-- Account Stats -->
+                <div class="panel stats-panel">
+                    <div class="panel-header">
+                        <i class="fas fa-chart-pie"></i>
+                        <h3>Account Overview</h3>
+                    </div>
+                    <div class="panel-content">
+                        <div class="balance-display">
+                            <div class="balance-amount" id="currentBalance">$0.00</div>
+                            <div class="balance-label">Current Balance</div>
                         </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="todayProfit">$0.00</div>
-                            <div class="stat-label">Today P&L</div>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-box">
+                                <div class="stat-icon profit"><i class="fas fa-arrow-up"></i></div>
+                                <div class="stat-info">
+                                    <div class="stat-value" id="todayProfitStat">$0.00</div>
+                                    <div class="stat-label">Today P&L</div>
+                                </div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-icon trades"><i class="fas fa-exchange-alt"></i></div>
+                                <div class="stat-info">
+                                    <div class="stat-value" id="totalTradesStat">0</div>
+                                    <div class="stat-label">Total Trades</div>
+                                </div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-icon winrate"><i class="fas fa-trophy"></i></div>
+                                <div class="stat-info">
+                                    <div class="stat-value" id="winRateStat">0%</div>
+                                    <div class="stat-label">Win Rate</div>
+                                </div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-icon streak"><i class="fas fa-fire"></i></div>
+                                <div class="stat-info">
+                                    <div class="stat-value" id="currentStreak">0</div>
+                                    <div class="stat-label">Win Streak</div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="totalTrades">0</div>
-                            <div class="stat-label">Total Trades</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="winRate">0%</div>
-                            <div class="stat-label">Win Rate</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="aiAccuracy">0%</div>
-                            <div class="stat-label">AI Accuracy</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="totalTicks">0</div>
-                            <div class="stat-label">Ticks</div>
+
+                        <div class="performance-chart">
+                            <div class="chart-header">Performance Today</div>
+                            <div class="chart-container">
+                                <canvas id="performanceChart" width="280" height="120"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="card">
-                    <h3>📋 Trade History</h3>
-                    <div class="history-section" id="tradeHistory">
-                        <div class="no-trades">No trades yet</div>
+                <!-- Trade History -->
+                <div class="panel history-panel">
+                    <div class="panel-header">
+                        <i class="fas fa-history"></i>
+                        <h3>Trade History</h3>
+                        <div class="history-controls">
+                            <button class="btn-small" onclick="clearHistory()">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            <button class="btn-small" onclick="exportHistory()">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div class="history-filters">
+                            <button class="filter-btn active" onclick="filterHistory('all')">All</button>
+                            <button class="filter-btn" onclick="filterHistory('wins')">Wins</button>
+                            <button class="filter-btn" onclick="filterHistory('losses')">Losses</button>
+                            <button class="filter-btn" onclick="filterHistory('ai')">AI</button>
+                        </div>
+                        <div class="history-list" id="tradeHistoryList">
+                            <div class="no-trades">
+                                <i class="fas fa-chart-line"></i>
+                                <p>No trades yet</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Market Info -->
+                <div class="panel market-panel">
+                    <div class="panel-header">
+                        <i class="fas fa-globe"></i>
+                        <h3>Market Info</h3>
+                    </div>
+                    <div class="panel-content">
+                        <div class="market-stats">
+                            <div class="market-stat">
+                                <span class="stat-label">Market Status</span>
+                                <span class="stat-value" id="marketStatus">Closed</span>
+                            </div>
+                            <div class="market-stat">
+                                <span class="stat-label">Server Time</span>
+                                <span class="stat-value" id="serverTime">--:--:--</span>
+                            </div>
+                            <div class="market-stat">
+                                <span class="stat-label">Tick Count</span>
+                                <span class="stat-value" id="tickCount">0</span>
+                            </div>
+                            <div class="market-stat">
+                                <span class="stat-label">Session Uptime</span>
+                                <span class="stat-value" id="sessionUptime">00:00:00</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div id="alertContainer"></div>
+        <!-- Alert System -->
+        <div id="alertSystem" class="alert-system"></div>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Initializing AI Systems...</div>
+            </div>
+        </div>
     </div>
+
     <script src="./index.js"></script>
-    
 </body>
 </html>

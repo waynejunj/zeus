@@ -1,7 +1,7 @@
 {
-  "name": "zeus-digit-watcher",
-  "version": "1.0.0",
-  "description": "Zeus - Digit Over 4 Watcher for Deriv markets",
+  "name": "zeus-ultimate-trading-ai",
+  "version": "2.0.0",
+  "description": "Zeus Ultimate - Advanced AI Trading System with Maximum Profit Generation",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -11,7 +11,7 @@
     "express": "^4.18.2",
     "ws": "^8.14.2"
   },
-  "keywords": ["trading", "deriv", "websocket", "digits"],
-  "author": "",
+  "keywords": ["trading", "deriv", "websocket", "digits", "ai", "neural-network", "profit"],
+  "author": "Zeus AI Systems",
   "license": "MIT"
 }
