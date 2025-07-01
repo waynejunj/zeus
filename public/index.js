@@ -1,4 +1,4 @@
-// Zeus Ultimate AI Trading System - Enhanced Real Account Support
+// Zeus Ultimate AI Trading System
 class ZeusAI {
     constructor() {
         this.ws = null;
@@ -18,55 +18,11 @@ class ZeusAI {
             profit: 0
         };
         
-        // Account type detection and handling
-        this.accountType = 'unknown';
-        this.accountInfo = null;
-        this.isRealAccount = false;
-        this.accountCurrency = 'USD';
-        this.minStake = 0.35;
-        this.maxStake = 50000;
-        
-        // Enhanced real account safety features
-        this.realAccountSafety = {
-            enabled: true,
-            maxDailyLoss: 50,
-            maxConsecutiveLosses: 3,
-            minConfidenceForReal: 85,
-            cooldownAfterLoss: 30000, // 30 seconds
-            lastLossTime: 0,
-            consecutiveLosses: 0,
-            dailyLoss: 0,
-            dailyStartBalance: 0
-        };
-        
-        // Multiple trading strategies for different account types
-        this.strategies = {
-            conservative: {
-                minConfidence: 85,
-                maxStake: 2,
-                riskLevel: 'low'
-            },
-            moderate: {
-                minConfidence: 75,
-                maxStake: 5,
-                riskLevel: 'medium'
-            },
-            aggressive: {
-                minConfidence: 65,
-                maxStake: 10,
-                riskLevel: 'high'
-            }
-        };
-        
-        this.currentStrategy = 'conservative';
-        
-        // Neural network simulation with enhanced patterns
+        // Neural network simulation
         this.neuralNetwork = {
             patterns: [],
             weights: this.initializeWeights(),
-            learningRate: 0.01,
-            momentum: 0.9,
-            previousWeights: null
+            learningRate: 0.01
         };
         
         this.initializeEventListeners();
@@ -78,9 +34,7 @@ class ZeusAI {
         const weights = {};
         const patterns = [
             'consecutive_same', 'alternating', 'ascending', 'descending',
-            'even_odd_pattern', 'fibonacci_like', 'prime_pattern', 'sum_pattern',
-            'volatility_high', 'volatility_low', 'trend_up', 'trend_down',
-            'support_resistance', 'breakout_pattern', 'reversal_pattern'
+            'even_odd_pattern', 'fibonacci_like', 'prime_pattern', 'sum_pattern'
         ];
         
         patterns.forEach(pattern => {
@@ -113,14 +67,13 @@ class ZeusAI {
         try {
             this.showLoading('Connecting to Deriv API...');
             
-            // Enhanced WebSocket connection with better error handling
             this.ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${appId}`);
             
             this.ws.onopen = () => {
                 console.log('Connected to Deriv WebSocket');
                 this.hideLoading();
                 
-                // First, authorize the connection
+                // Authorize the connection
                 this.authorize(apiToken);
             };
             
@@ -172,12 +125,6 @@ class ZeusAI {
             return;
         }
         
-        // Handle account information
-        if (data.get_account_status) {
-            this.handleAccountStatus(data.get_account_status);
-            return;
-        }
-        
         // Handle balance updates
         if (data.balance) {
             this.handleBalanceUpdate(data.balance);
@@ -212,16 +159,11 @@ class ZeusAI {
     handleAuthorization(authData) {
         console.log('Authorization successful:', authData);
         this.isConnected = true;
-        this.accountInfo = authData;
-        
-        // Detect account type and set safety parameters
-        this.detectAccountType(authData);
         
         this.updateConnectionStatus();
         this.showAlert('Successfully connected to Deriv!', 'success');
         
-        // Get account status and balance
-        this.getAccountStatus();
+        // Get balance
         this.getBalance();
         
         // Subscribe to tick data
@@ -229,59 +171,6 @@ class ZeusAI {
         
         // Subscribe to portfolio for trade updates
         this.subscribePortfolio();
-    }
-    
-    detectAccountType(authData) {
-        // Enhanced account type detection
-        this.isRealAccount = authData.account_type !== 'demo';
-        this.accountType = authData.account_type || 'unknown';
-        this.accountCurrency = authData.currency || 'USD';
-        
-        console.log(`Account Type: ${this.accountType}, Real: ${this.isRealAccount}, Currency: ${this.accountCurrency}`);
-        
-        // Adjust strategy based on account type
-        if (this.isRealAccount) {
-            this.currentStrategy = 'conservative';
-            this.realAccountSafety.enabled = true;
-            this.realAccountSafety.dailyStartBalance = authData.balance || 0;
-            
-            // Show real account warning
-            this.showAlert('Real account detected. Enhanced safety features enabled.', 'info');
-        } else {
-            this.currentStrategy = 'moderate';
-            this.realAccountSafety.enabled = false;
-        }
-        
-        this.updateStrategyDisplay();
-    }
-    
-    getAccountStatus() {
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-            this.ws.send(JSON.stringify({
-                get_account_status: 1,
-                req_id: 2
-            }));
-        }
-    }
-    
-    handleAccountStatus(statusData) {
-        console.log('Account Status:', statusData);
-        
-        // Update minimum and maximum stake based on account
-        if (statusData.currency_config) {
-            const currencyConfig = statusData.currency_config[this.accountCurrency];
-            if (currencyConfig) {
-                this.minStake = currencyConfig.stake_default || 0.35;
-                this.maxStake = currencyConfig.stake_max || 50000;
-            }
-        }
-        
-        // Check for any account restrictions
-        if (statusData.status && statusData.status.includes('trading_disabled')) {
-            this.showAlert('Trading is disabled on this account', 'error');
-            this.aiEnabled = false;
-            document.getElementById('aiTradeToggle').checked = false;
-        }
     }
     
     getBalance() {
@@ -297,12 +186,6 @@ class ZeusAI {
     handleBalanceUpdate(balanceData) {
         this.balance = parseFloat(balanceData.balance);
         this.updateBalanceDisplay();
-        
-        // Update daily loss tracking for real accounts
-        if (this.isRealAccount && this.realAccountSafety.dailyStartBalance > 0) {
-            const currentLoss = this.realAccountSafety.dailyStartBalance - this.balance;
-            this.realAccountSafety.dailyLoss = Math.max(0, currentLoss);
-        }
     }
     
     subscribeTicks() {
@@ -350,82 +233,22 @@ class ZeusAI {
             this.runAIAnalysis();
         }
         
-        // Auto trade logic with enhanced real account safety
+        // Auto trade logic
         if (this.aiEnabled && this.recentDigits.length >= 15) {
             this.checkAutoTrade();
         }
     }
     
     checkAutoTrade() {
-        // Enhanced safety checks for real accounts
-        if (this.isRealAccount && this.realAccountSafety.enabled) {
-            // Check daily loss limit
-            if (this.realAccountSafety.dailyLoss >= this.realAccountSafety.maxDailyLoss) {
-                this.showAlert('Daily loss limit reached. Auto trading disabled.', 'warning');
-                this.aiEnabled = false;
-                document.getElementById('aiTradeToggle').checked = false;
-                return;
-            }
-            
-            // Check consecutive losses
-            if (this.realAccountSafety.consecutiveLosses >= this.realAccountSafety.maxConsecutiveLosses) {
-                const timeSinceLastLoss = Date.now() - this.realAccountSafety.lastLossTime;
-                if (timeSinceLastLoss < this.realAccountSafety.cooldownAfterLoss) {
-                    return; // Still in cooldown
-                }
-            }
-            
-            // Check minimum confidence for real accounts
-            const prediction = this.getPrediction();
-            if (prediction.confidence < this.realAccountSafety.minConfidenceForReal) {
-                return; // Confidence too low for real account
-            }
-        }
-        
-        // Regular auto trade logic
         const prediction = this.getPrediction();
-        const minConfidence = this.getMinConfidence();
+        const minConfidence = parseInt(document.getElementById('minConfidence').value);
         
         if (prediction.confidence >= minConfidence) {
-            const amount = this.getTradeAmount();
+            const amount = parseFloat(document.getElementById('tradeAmount').value);
             const duration = document.getElementById('tradeDuration').value;
-            
-            // Additional validation for real accounts
-            if (this.isRealAccount) {
-                if (amount < this.minStake || amount > this.maxStake) {
-                    this.showAlert(`Trade amount must be between ${this.minStake} and ${this.maxStake} ${this.accountCurrency}`, 'error');
-                    return;
-                }
-                
-                if (amount > this.balance) {
-                    this.showAlert('Insufficient balance for trade', 'error');
-                    return;
-                }
-            }
             
             this.placeAITrade(prediction.direction, amount, duration);
         }
-    }
-    
-    getMinConfidence() {
-        if (this.isRealAccount) {
-            return Math.max(
-                parseInt(document.getElementById('minConfidence').value),
-                this.realAccountSafety.minConfidenceForReal
-            );
-        }
-        return parseInt(document.getElementById('minConfidence').value);
-    }
-    
-    getTradeAmount() {
-        const baseAmount = parseFloat(document.getElementById('tradeAmount').value);
-        
-        // Apply strategy-based adjustments
-        const strategy = this.strategies[this.currentStrategy];
-        const adjustedAmount = Math.min(baseAmount, strategy.maxStake);
-        
-        // Ensure minimum stake requirements
-        return Math.max(adjustedAmount, this.minStake);
     }
     
     placeAITrade(direction, amount, duration) {
@@ -436,17 +259,6 @@ class ZeusAI {
     placeTrade(direction, amount, duration, source = 'manual') {
         if (!this.isConnected) {
             this.showAlert('Not connected to Deriv', 'error');
-            return;
-        }
-        
-        // Enhanced validation for different account types
-        if (amount < this.minStake) {
-            this.showAlert(`Minimum stake is ${this.minStake} ${this.accountCurrency}`, 'error');
-            return;
-        }
-        
-        if (amount > this.maxStake) {
-            this.showAlert(`Maximum stake is ${this.maxStake} ${this.accountCurrency}`, 'error');
             return;
         }
         
@@ -470,7 +282,7 @@ class ZeusAI {
                 amount: amount,
                 basis: 'stake',
                 contract_type: contractType,
-                currency: this.accountCurrency,
+                currency: 'USD',
                 duration: duration,
                 duration_unit: 't',
                 symbol: market,
@@ -548,7 +360,7 @@ class ZeusAI {
         this.showAlert(`${trade.direction.toUpperCase()} trade placed: $${trade.amount}`, 'success');
     }
     
-    // Enhanced AI Analysis with multiple strategies
+    // AI Analysis
     runAIAnalysis() {
         if (this.recentDigits.length < 10) return;
         
@@ -558,7 +370,7 @@ class ZeusAI {
         this.updatePredictionDisplay(prediction);
         this.updateAnalyticsDisplay(patterns);
         
-        // Learn from patterns (simplified neural network simulation)
+        // Learn from patterns
         this.updateNeuralNetwork(patterns);
     }
     
@@ -587,23 +399,6 @@ class ZeusAI {
         
         // Pattern 7: Sum patterns
         patterns.sum_pattern = this.analyzeSumPatterns(digits);
-        
-        // Pattern 8: Volatility analysis
-        patterns.volatility_high = this.analyzeVolatility(digits, 'high');
-        patterns.volatility_low = this.analyzeVolatility(digits, 'low');
-        
-        // Pattern 9: Trend analysis
-        patterns.trend_up = this.analyzeTrend(digits, 'up');
-        patterns.trend_down = this.analyzeTrend(digits, 'down');
-        
-        // Pattern 10: Support/Resistance levels
-        patterns.support_resistance = this.analyzeSupportResistance(digits);
-        
-        // Pattern 11: Breakout patterns
-        patterns.breakout_pattern = this.analyzeBreakout(digits);
-        
-        // Pattern 12: Reversal patterns
-        patterns.reversal_pattern = this.analyzeReversal(digits);
         
         return patterns;
     }
@@ -700,79 +495,6 @@ class ZeusAI {
         return patternCount / (digits.length - 2);
     }
     
-    analyzeVolatility(digits, type) {
-        let changes = 0;
-        for (let i = 1; i < digits.length; i++) {
-            const change = Math.abs(digits[i] - digits[i-1]);
-            if (type === 'high' && change >= 3) changes++;
-            if (type === 'low' && change <= 1) changes++;
-        }
-        return changes / (digits.length - 1);
-    }
-    
-    analyzeTrend(digits, direction) {
-        const windowSize = 5;
-        if (digits.length < windowSize * 2) return 0;
-        
-        const firstHalf = digits.slice(0, windowSize);
-        const secondHalf = digits.slice(-windowSize);
-        
-        const firstAvg = firstHalf.reduce((a, b) => a + b) / windowSize;
-        const secondAvg = secondHalf.reduce((a, b) => a + b) / windowSize;
-        
-        const trend = secondAvg - firstAvg;
-        
-        if (direction === 'up') return Math.max(0, trend / 5);
-        if (direction === 'down') return Math.max(0, -trend / 5);
-        
-        return 0;
-    }
-    
-    analyzeSupportResistance(digits) {
-        const frequency = {};
-        digits.forEach(digit => {
-            frequency[digit] = (frequency[digit] || 0) + 1;
-        });
-        
-        const maxFreq = Math.max(...Object.values(frequency));
-        return maxFreq / digits.length;
-    }
-    
-    analyzeBreakout(digits) {
-        if (digits.length < 10) return 0;
-        
-        const recent = digits.slice(-5);
-        const previous = digits.slice(-10, -5);
-        
-        const recentMax = Math.max(...recent);
-        const recentMin = Math.min(...recent);
-        const prevMax = Math.max(...previous);
-        const prevMin = Math.min(...previous);
-        
-        const breakoutUp = recentMax > prevMax ? 1 : 0;
-        const breakoutDown = recentMin < prevMin ? 1 : 0;
-        
-        return (breakoutUp + breakoutDown) / 2;
-    }
-    
-    analyzeReversal(digits) {
-        if (digits.length < 6) return 0;
-        
-        let reversals = 0;
-        for (let i = 2; i < digits.length - 2; i++) {
-            const prev = digits[i-1];
-            const curr = digits[i];
-            const next = digits[i+1];
-            
-            // Peak reversal
-            if (curr > prev && curr > next) reversals++;
-            // Valley reversal
-            if (curr < prev && curr < next) reversals++;
-        }
-        
-        return reversals / (digits.length - 4);
-    }
-    
     calculatePrediction(patterns) {
         let callScore = 0;
         let putScore = 0;
@@ -830,18 +552,8 @@ class ZeusAI {
             for (let pattern in patterns) {
                 if (this.neuralNetwork.weights[pattern] !== undefined) {
                     this.neuralNetwork.weights[pattern] += adjustment * patterns[pattern];
-                    
-                    // Apply momentum
-                    if (this.neuralNetwork.previousWeights && this.neuralNetwork.previousWeights[pattern]) {
-                        const momentum = this.neuralNetwork.momentum * 
-                            (this.neuralNetwork.weights[pattern] - this.neuralNetwork.previousWeights[pattern]);
-                        this.neuralNetwork.weights[pattern] += momentum;
-                    }
                 }
             }
-            
-            // Store previous weights for momentum
-            this.neuralNetwork.previousWeights = { ...this.neuralNetwork.weights };
         }
     }
     
@@ -868,7 +580,7 @@ class ZeusAI {
         
         if (this.isConnected) {
             dot.classList.add('connected');
-            text.textContent = `Connected (${this.accountType})`;
+            text.textContent = 'Connected';
             connectBtn.style.display = 'none';
             disconnectBtn.style.display = 'inline-flex';
             
@@ -885,9 +597,7 @@ class ZeusAI {
     
     updateBalanceDisplay() {
         const balanceElements = [
-            'currentBalance',
-            'currentBalanceManual',
-            'currentBalanceAuto'
+            'currentBalance'
         ];
         
         balanceElements.forEach(id => {
@@ -1001,11 +711,6 @@ class ZeusAI {
         document.getElementById('sessionUptime').textContent = uptime;
     }
     
-    updateStrategyDisplay() {
-        // Update AI activity log with current strategy
-        this.logAIActivity(`Strategy: ${this.currentStrategy.toUpperCase()} (${this.isRealAccount ? 'Real' : 'Demo'} Account)`);
-    }
-    
     formatUptime(ms) {
         const seconds = Math.floor(ms / 1000);
         const hours = Math.floor(seconds / 3600);
@@ -1020,14 +725,7 @@ class ZeusAI {
         const display = document.getElementById('confidenceValue');
         
         if (slider && display) {
-            let value = parseInt(slider.value);
-            
-            // Enforce minimum confidence for real accounts
-            if (this.isRealAccount && value < this.realAccountSafety.minConfidenceForReal) {
-                value = this.realAccountSafety.minConfidenceForReal;
-                slider.value = value;
-            }
-            
+            const value = parseInt(slider.value);
             display.textContent = `${value}%`;
         }
     }
