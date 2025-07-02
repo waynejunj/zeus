@@ -21,10 +21,10 @@ class ZeusAI {
         // Enhanced Neural Network with multiple layers
         this.neuralNetwork = {
             patterns: [],
-            weights: this.initializeAdvancedWeights(),
+            weights: {},
             learningRate: 0.015,
             momentum: 0.9,
-            previousWeightChanges: {},
+            previousWeightChanges: {}, // Initialize this first
             layers: {
                 input: 25,
                 hidden1: 50,
@@ -32,6 +32,9 @@ class ZeusAI {
                 output: 2
             }
         };
+        
+        // Now initialize weights after previousWeightChanges is defined
+        this.neuralNetwork.weights = this.initializeAdvancedWeights();
         
         // Advanced market analysis
         this.marketAnalysis = {
@@ -101,7 +104,10 @@ class ZeusAI {
         
         patterns.forEach(pattern => {
             weights[pattern] = (Math.random() * 2 - 1) * 0.5; // Smaller initial weights
-            this.neuralNetwork.previousWeightChanges[pattern] = 0;
+            // Ensure previousWeightChanges exists before accessing it
+            if (this.neuralNetwork && this.neuralNetwork.previousWeightChanges) {
+                this.neuralNetwork.previousWeightChanges[pattern] = 0;
+            }
         });
         
         return weights;
@@ -756,6 +762,103 @@ class ZeusAI {
         patterns.quantum_pattern = this.analyzeQuantumPattern(digits);
         
         return patterns;
+    }
+    
+    analyzeConsecutiveSame(digits) {
+        if (digits.length < 2) return 0;
+        let consecutive = 0;
+        let maxConsecutive = 0;
+        
+        for (let i = 1; i < digits.length; i++) {
+            if (digits[i] === digits[i-1]) {
+                consecutive++;
+                maxConsecutive = Math.max(maxConsecutive, consecutive);
+            } else {
+                consecutive = 0;
+            }
+        }
+        
+        return maxConsecutive / digits.length;
+    }
+    
+    analyzeAlternating(digits) {
+        if (digits.length < 3) return 0;
+        let alternating = 0;
+        
+        for (let i = 2; i < digits.length; i++) {
+            if ((digits[i] > digits[i-1] && digits[i-1] < digits[i-2]) ||
+                (digits[i] < digits[i-1] && digits[i-1] > digits[i-2])) {
+                alternating++;
+            }
+        }
+        
+        return alternating / (digits.length - 2);
+    }
+    
+    analyzeAscending(digits) {
+        if (digits.length < 2) return 0;
+        let ascending = 0;
+        
+        for (let i = 1; i < digits.length; i++) {
+            if (digits[i] > digits[i-1]) {
+                ascending++;
+            }
+        }
+        
+        return ascending / (digits.length - 1);
+    }
+    
+    analyzeDescending(digits) {
+        if (digits.length < 2) return 0;
+        let descending = 0;
+        
+        for (let i = 1; i < digits.length; i++) {
+            if (digits[i] < digits[i-1]) {
+                descending++;
+            }
+        }
+        
+        return descending / (digits.length - 1);
+    }
+    
+    analyzeEvenOdd(digits) {
+        const evenCount = digits.filter(d => d % 2 === 0).length;
+        const oddCount = digits.length - evenCount;
+        return Math.abs(evenCount - oddCount) / digits.length;
+    }
+    
+    analyzeFibonacci(digits) {
+        const fibSequence = [0, 1, 1, 2, 3, 5, 8];
+        let fibMatches = 0;
+        
+        for (let i = 0; i < digits.length - 2; i++) {
+            const sum = digits[i] + digits[i+1];
+            if (sum === digits[i+2] || fibSequence.includes(digits[i])) {
+                fibMatches++;
+            }
+        }
+        
+        return fibMatches / Math.max(digits.length - 2, 1);
+    }
+    
+    analyzePrimes(digits) {
+        const primes = [2, 3, 5, 7];
+        const primeCount = digits.filter(d => primes.includes(d)).length;
+        return primeCount / digits.length;
+    }
+    
+    analyzeSumPatterns(digits) {
+        if (digits.length < 3) return 0;
+        let sumPatterns = 0;
+        
+        for (let i = 0; i < digits.length - 2; i++) {
+            const sum = (digits[i] + digits[i+1]) % 10;
+            if (sum === digits[i+2]) {
+                sumPatterns++;
+            }
+        }
+        
+        return sumPatterns / (digits.length - 2);
     }
     
     analyzeVolatilityPattern(digits) {
