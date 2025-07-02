@@ -21,10 +21,17 @@ class ZeusAI {
         // Advanced Neural Network
         this.neuralNetwork = {
             patterns: [],
+<<<<<<< HEAD
             weights: {},
             previousWeightChanges: {},
             learningRate: 0.01,
             momentum: 0.9,
+=======
+            weights: this.initializeAdvancedWeights(),
+            learningRate: 0.015,
+            momentum: 0.9,
+            previousWeightChanges: {},
+>>>>>>> dc86583 (Revert "Fix Neural Network Initialization Error")
             layers: {
                 input: 20,
                 hidden1: 15,
@@ -33,7 +40,58 @@ class ZeusAI {
             }
         };
         
+<<<<<<< HEAD
         this.initializeAdvancedWeights();
+=======
+        // Advanced market analysis
+        this.marketAnalysis = {
+            volatility: 0,
+            trend: 'neutral',
+            momentum: 0,
+            support: 0,
+            resistance: 0,
+            fibonacci: [],
+            movingAverages: {
+                sma5: 0,
+                sma10: 0,
+                sma20: 0,
+                ema5: 0,
+                ema10: 0
+            }
+        };
+        
+        // Risk management system
+        this.riskManager = {
+            maxConsecutiveLosses: 3,
+            consecutiveLosses: 0,
+            dailyLossLimit: 50,
+            dailyLoss: 0,
+            profitTarget: 100,
+            dailyProfit: 0,
+            martingaleMultiplier: 2.1,
+            antiMartingaleMultiplier: 1.5,
+            maxMartingaleSteps: 4,
+            currentMartingaleStep: 0
+        };
+        
+        // Pattern recognition system
+        this.patternRecognition = {
+            sequences: new Map(),
+            frequencies: new Map(),
+            correlations: new Map(),
+            seasonality: new Map(),
+            cyclicalPatterns: []
+        };
+        
+        // Advanced prediction models
+        this.predictionModels = {
+            lstm: new LSTMModel(),
+            randomForest: new RandomForestModel(),
+            svm: new SVMModel(),
+            ensemble: new EnsembleModel()
+        };
+        
+>>>>>>> dc86583 (Revert "Fix Neural Network Initialization Error")
         this.initializeEventListeners();
         this.startAIAnalysis();
         this.updateUI();
@@ -48,7 +106,11 @@ class ZeusAI {
         ];
         
         patterns.forEach(pattern => {
+<<<<<<< HEAD
             this.neuralNetwork.weights[pattern] = Math.random() * 2 - 1;
+=======
+            weights[pattern] = (Math.random() * 2 - 1) * 0.5; // Smaller initial weights
+>>>>>>> dc86583 (Revert "Fix Neural Network Initialization Error")
             this.neuralNetwork.previousWeightChanges[pattern] = 0;
         });
     }
@@ -63,7 +125,701 @@ class ZeusAI {
         }
     }
     
+<<<<<<< HEAD
     async connect() {
+=======
+    performEnsemblePrediction() {
+        if (this.recentDigits.length < 20) return;
+        
+        // Get predictions from multiple models
+        const predictions = {
+            neural: this.getNeuralPrediction(),
+            pattern: this.getPatternPrediction(),
+            technical: this.getTechnicalPrediction(),
+            sentiment: this.getSentimentPrediction(),
+            cyclical: this.getCyclicalPrediction()
+        };
+        
+        // Combine predictions using weighted ensemble
+        const weights = {
+            neural: 0.3,
+            pattern: 0.25,
+            technical: 0.2,
+            sentiment: 0.15,
+            cyclical: 0.1
+        };
+        
+        let callScore = 0;
+        let putScore = 0;
+        
+        Object.keys(predictions).forEach(model => {
+            const pred = predictions[model];
+            const weight = weights[model];
+            
+            callScore += pred.callProbability * weight;
+            putScore += pred.putProbability * weight;
+        });
+        
+        // Normalize scores
+        const total = callScore + putScore;
+        const finalCallProb = total > 0 ? (callScore / total) * 100 : 50;
+        const finalPutProb = total > 0 ? (putScore / total) * 100 : 50;
+        
+        const direction = finalCallProb > finalPutProb ? 'call' : 'put';
+        const confidence = Math.max(finalCallProb, finalPutProb);
+        
+        const ensemblePrediction = {
+            direction,
+            confidence: Math.round(confidence),
+            callProbability: Math.round(finalCallProb),
+            putProbability: Math.round(finalPutProb)
+        };
+        
+        this.updatePredictionDisplay(ensemblePrediction);
+        
+        return ensemblePrediction;
+    }
+    
+    getNeuralPrediction() {
+        const patterns = this.analyzeAdvancedPatterns();
+        return this.calculateAdvancedPrediction(patterns);
+    }
+    
+    getPatternPrediction() {
+        if (this.recentDigits.length < 5) {
+            return { callProbability: 50, putProbability: 50 };
+        }
+        
+        const lastPattern = this.recentDigits.slice(-4).join('');
+        let callCount = 0;
+        let putCount = 0;
+        
+        // Check historical outcomes for this pattern
+        this.patternRecognition.sequences.forEach((count, key) => {
+            if (key.startsWith(lastPattern)) {
+                const outcome = parseInt(key.split('->')[1]);
+                const lastDigit = this.recentDigits[this.recentDigits.length - 1];
+                
+                if (outcome > lastDigit) {
+                    callCount += count;
+                } else if (outcome < lastDigit) {
+                    putCount += count;
+                }
+            }
+        });
+        
+        const total = callCount + putCount;
+        if (total === 0) {
+            return { callProbability: 50, putProbability: 50 };
+        }
+        
+        return {
+            callProbability: (callCount / total) * 100,
+            putProbability: (putCount / total) * 100
+        };
+    }
+    
+    getTechnicalPrediction() {
+        const data = this.recentDigits.slice(-20);
+        if (data.length < 10) {
+            return { callProbability: 50, putProbability: 50 };
+        }
+        
+        let technicalScore = 0;
+        
+        // Moving average crossover
+        const sma5 = this.marketAnalysis.movingAverages.sma5;
+        const sma10 = this.marketAnalysis.movingAverages.sma10;
+        if (sma5 > sma10) technicalScore += 20;
+        else technicalScore -= 20;
+        
+        // RSI analysis
+        const rsi = this.calculateRSI(data);
+        if (rsi < 30) technicalScore += 30; // Oversold, expect bounce
+        else if (rsi > 70) technicalScore -= 30; // Overbought, expect decline
+        
+        // Bollinger Bands
+        const bollinger = this.calculateBollingerBands(data);
+        const currentPrice = data[data.length - 1];
+        if (currentPrice < bollinger.lower) technicalScore += 25;
+        else if (currentPrice > bollinger.upper) technicalScore -= 25;
+        
+        // Momentum
+        const momentum = this.calculateMomentum(data);
+        technicalScore += momentum * 25;
+        
+        // Convert to probabilities
+        const normalizedScore = Math.max(-100, Math.min(100, technicalScore));
+        const callProb = 50 + (normalizedScore / 2);
+        const putProb = 100 - callProb;
+        
+        return {
+            callProbability: callProb,
+            putProbability: putProb
+        };
+    }
+    
+    getSentimentPrediction() {
+        const data = this.recentDigits.slice(-15);
+        const bullishSignals = this.calculateBullishSignals(data);
+        const bearishSignals = this.calculateBearishSignals(data);
+        
+        return {
+            callProbability: bullishSignals,
+            putProbability: bearishSignals
+        };
+    }
+    
+    getCyclicalPrediction() {
+        if (this.patternRecognition.cyclicalPatterns.length === 0) {
+            return { callProbability: 50, putProbability: 50 };
+        }
+        
+        const recentData = this.recentDigits.slice(-8);
+        let bestMatch = null;
+        let bestScore = 0;
+        
+        // Find the best matching cyclical pattern
+        this.patternRecognition.cyclicalPatterns.forEach(cycle => {
+            if (cycle.pattern.length <= recentData.length) {
+                const score = this.calculatePatternSimilarity(
+                    recentData.slice(-cycle.pattern.length),
+                    cycle.pattern
+                );
+                
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMatch = cycle;
+                }
+            }
+        });
+        
+        if (!bestMatch || bestScore < 0.7) {
+            return { callProbability: 50, putProbability: 50 };
+        }
+        
+        // Predict next value based on cycle
+        const currentPos = recentData.length % bestMatch.pattern.length;
+        const nextPos = (currentPos + 1) % bestMatch.pattern.length;
+        const predictedNext = bestMatch.pattern[nextPos];
+        const currentDigit = recentData[recentData.length - 1];
+        
+        if (predictedNext > currentDigit) {
+            return { callProbability: 70, putProbability: 30 };
+        } else if (predictedNext < currentDigit) {
+            return { callProbability: 30, putProbability: 70 };
+        } else {
+            return { callProbability: 50, putProbability: 50 };
+        }
+    }
+    
+    calculatePatternSimilarity(pattern1, pattern2) {
+        if (pattern1.length !== pattern2.length) return 0;
+        
+        let matches = 0;
+        for (let i = 0; i < pattern1.length; i++) {
+            if (pattern1[i] === pattern2[i]) matches++;
+        }
+        
+        return matches / pattern1.length;
+    }
+    
+    analyzeAdvancedPatterns() {
+        const digits = this.recentDigits.slice(-25);
+        const patterns = {};
+        
+        // Original patterns
+        patterns.consecutive_same = this.analyzeConsecutiveSame(digits);
+        patterns.alternating = this.analyzeAlternating(digits);
+        patterns.ascending = this.analyzeAscending(digits);
+        patterns.descending = this.analyzeDescending(digits);
+        patterns.even_odd_pattern = this.analyzeEvenOdd(digits);
+        patterns.fibonacci_like = this.analyzeFibonacci(digits);
+        patterns.prime_pattern = this.analyzePrimes(digits);
+        patterns.sum_pattern = this.analyzeSumPatterns(digits);
+        
+        // Advanced patterns
+        patterns.volatility_pattern = this.analyzeVolatilityPattern(digits);
+        patterns.momentum_pattern = this.analyzeMomentumPattern(digits);
+        patterns.trend_reversal = this.analyzeTrendReversal(digits);
+        patterns.support_resistance = this.analyzeSupportResistancePattern(digits);
+        patterns.moving_average_cross = this.analyzeMovingAverageCross(digits);
+        patterns.rsi_pattern = this.analyzeRSIPattern(digits);
+        patterns.bollinger_pattern = this.analyzeBollingerPattern(digits);
+        patterns.macd_pattern = this.analyzeMACDPattern(digits);
+        patterns.volume_pattern = this.analyzeVolumePattern(digits);
+        patterns.time_pattern = this.analyzeTimePattern(digits);
+        patterns.seasonal_pattern = this.analyzeSeasonalPattern(digits);
+        patterns.correlation_pattern = this.analyzeCorrelationPattern(digits);
+        patterns.fractal_pattern = this.analyzeFractalPattern(digits);
+        patterns.chaos_pattern = this.analyzeChaosPattern(digits);
+        patterns.neural_pattern = this.analyzeNeuralPattern(digits);
+        patterns.genetic_pattern = this.analyzeGeneticPattern(digits);
+        patterns.quantum_pattern = this.analyzeQuantumPattern(digits);
+        
+        return patterns;
+    }
+    
+    analyzeVolatilityPattern(digits) {
+        const volatility = this.calculateVolatility(digits);
+        return Math.min(volatility, 1);
+    }
+    
+    analyzeMomentumPattern(digits) {
+        const momentum = this.calculateMomentum(digits);
+        return Math.max(-1, Math.min(1, momentum));
+    }
+    
+    analyzeTrendReversal(digits) {
+        if (digits.length < 10) return 0;
+        
+        const recent = digits.slice(-5);
+        const older = digits.slice(-10, -5);
+        
+        const recentTrend = this.calculateTrend(recent);
+        const olderTrend = this.calculateTrend(older);
+        
+        // Check for trend reversal
+        if ((recentTrend > 0 && olderTrend < 0) || (recentTrend < 0 && olderTrend > 0)) {
+            return 1;
+        }
+        
+        return 0;
+    }
+    
+    calculateTrend(data) {
+        if (data.length < 2) return 0;
+        
+        let upCount = 0;
+        let downCount = 0;
+        
+        for (let i = 1; i < data.length; i++) {
+            if (data[i] > data[i-1]) upCount++;
+            else if (data[i] < data[i-1]) downCount++;
+        }
+        
+        return (upCount - downCount) / (data.length - 1);
+    }
+    
+    analyzeSupportResistancePattern(digits) {
+        const currentDigit = digits[digits.length - 1];
+        const support = this.marketAnalysis.support;
+        const resistance = this.marketAnalysis.resistance;
+        
+        if (currentDigit <= support + 0.5) return 0.8; // Near support, likely bounce
+        if (currentDigit >= resistance - 0.5) return -0.8; // Near resistance, likely decline
+        
+        return 0;
+    }
+    
+    analyzeMovingAverageCross(digits) {
+        const sma5 = this.marketAnalysis.movingAverages.sma5;
+        const sma10 = this.marketAnalysis.movingAverages.sma10;
+        
+        if (sma5 > sma10) return 0.6; // Bullish cross
+        if (sma5 < sma10) return -0.6; // Bearish cross
+        
+        return 0;
+    }
+    
+    analyzeRSIPattern(digits) {
+        const rsi = this.calculateRSI(digits);
+        
+        if (rsi < 30) return 0.7; // Oversold
+        if (rsi > 70) return -0.7; // Overbought
+        
+        return (50 - rsi) / 50; // Normalized RSI
+    }
+    
+    analyzeBollingerPattern(digits) {
+        const bollinger = this.calculateBollingerBands(digits);
+        const currentPrice = digits[digits.length - 1];
+        
+        if (currentPrice < bollinger.lower) return 0.8; // Below lower band
+        if (currentPrice > bollinger.upper) return -0.8; // Above upper band
+        
+        return 0;
+    }
+    
+    analyzeMACDPattern(digits) {
+        const macd = this.calculateMACD(digits);
+        
+        if (macd.macd > macd.signal) return 0.5; // Bullish
+        if (macd.macd < macd.signal) return -0.5; // Bearish
+        
+        return 0;
+    }
+    
+    analyzeVolumePattern(digits) {
+        const volume = this.calculateAverageVolume(digits);
+        return Math.min(volume, 1);
+    }
+    
+    analyzeTimePattern(digits) {
+        const hour = new Date().getHours();
+        
+        // Market hours pattern (simplified)
+        if (hour >= 8 && hour <= 16) return 0.3; // Active hours
+        if (hour >= 20 || hour <= 4) return -0.2; // Low activity
+        
+        return 0;
+    }
+    
+    analyzeSeasonalPattern(digits) {
+        const day = new Date().getDay();
+        const month = new Date().getMonth();
+        
+        // Weekly pattern
+        let seasonalScore = 0;
+        if (day >= 1 && day <= 5) seasonalScore += 0.2; // Weekdays
+        
+        // Monthly pattern (simplified)
+        if (month >= 3 && month <= 8) seasonalScore += 0.1; // Active months
+        
+        return seasonalScore;
+    }
+    
+    analyzeCorrelationPattern(digits) {
+        if (digits.length < 10) return 0;
+        
+        const correlations = [];
+        for (let lag = 1; lag <= 5; lag++) {
+            const correlation = this.calculateAutocorrelation(digits, lag);
+            correlations.push(correlation);
+        }
+        
+        return correlations.reduce((a, b) => a + b) / correlations.length;
+    }
+    
+    calculateAutocorrelation(data, lag) {
+        if (data.length <= lag) return 0;
+        
+        const n = data.length - lag;
+        const mean = data.reduce((a, b) => a + b) / data.length;
+        
+        let numerator = 0;
+        let denominator = 0;
+        
+        for (let i = 0; i < n; i++) {
+            numerator += (data[i] - mean) * (data[i + lag] - mean);
+        }
+        
+        for (let i = 0; i < data.length; i++) {
+            denominator += Math.pow(data[i] - mean, 2);
+        }
+        
+        return denominator === 0 ? 0 : numerator / denominator;
+    }
+    
+    analyzeFractalPattern(digits) {
+        // Simplified fractal analysis
+        const fractals = this.findFractals(digits);
+        return fractals.length / digits.length;
+    }
+    
+    findFractals(data) {
+        const fractals = [];
+        for (let i = 2; i < data.length - 2; i++) {
+            // Bullish fractal
+            if (data[i] < data[i-1] && data[i] < data[i-2] && 
+                data[i] < data[i+1] && data[i] < data[i+2]) {
+                fractals.push({ type: 'bullish', index: i, value: data[i] });
+            }
+            // Bearish fractal
+            if (data[i] > data[i-1] && data[i] > data[i-2] && 
+                data[i] > data[i+1] && data[i] > data[i+2]) {
+                fractals.push({ type: 'bearish', index: i, value: data[i] });
+            }
+        }
+        return fractals;
+    }
+    
+    analyzeChaosPattern(digits) {
+        // Simplified chaos theory application
+        const lyapunov = this.calculateLyapunovExponent(digits);
+        return Math.max(-1, Math.min(1, lyapunov));
+    }
+    
+    calculateLyapunovExponent(data) {
+        if (data.length < 10) return 0;
+        
+        let sum = 0;
+        for (let i = 1; i < data.length; i++) {
+            const ratio = Math.abs(data[i] - data[i-1]) + 0.001; // Avoid log(0)
+            sum += Math.log(ratio);
+        }
+        
+        return sum / (data.length - 1);
+    }
+    
+    analyzeNeuralPattern(digits) {
+        // Use existing neural network weights as pattern indicator
+        const avgWeight = Object.values(this.neuralNetwork.weights)
+            .reduce((a, b) => a + b, 0) / Object.keys(this.neuralNetwork.weights).length;
+        
+        return Math.max(-1, Math.min(1, avgWeight));
+    }
+    
+    analyzeGeneticPattern(digits) {
+        // Simplified genetic algorithm pattern
+        const fitness = this.calculateFitness(digits);
+        return Math.max(-1, Math.min(1, fitness));
+    }
+    
+    calculateFitness(data) {
+        // Fitness based on pattern consistency
+        let consistency = 0;
+        for (let i = 2; i < data.length; i++) {
+            const trend1 = data[i-1] - data[i-2];
+            const trend2 = data[i] - data[i-1];
+            
+            if ((trend1 > 0 && trend2 > 0) || (trend1 < 0 && trend2 < 0)) {
+                consistency++;
+            }
+        }
+        
+        return (consistency / (data.length - 2)) * 2 - 1; // Normalize to [-1, 1]
+    }
+    
+    analyzeQuantumPattern(digits) {
+        // Simplified quantum-inspired pattern analysis
+        const entropy = this.calculateEntropy(digits);
+        return Math.max(-1, Math.min(1, entropy - 0.5));
+    }
+    
+    calculateEntropy(data) {
+        const frequencies = new Map();
+        data.forEach(digit => {
+            frequencies.set(digit, (frequencies.get(digit) || 0) + 1);
+        });
+        
+        let entropy = 0;
+        const total = data.length;
+        
+        frequencies.forEach(count => {
+            const probability = count / total;
+            entropy -= probability * Math.log2(probability);
+        });
+        
+        return entropy / Math.log2(10); // Normalize for digits 0-9
+    }
+    
+    calculateAdvancedPrediction(patterns) {
+        let callScore = 0;
+        let putScore = 0;
+        
+        // Apply enhanced neural network with momentum
+        for (let pattern in patterns) {
+            const weight = this.neuralNetwork.weights[pattern] || 0;
+            const value = patterns[pattern] * weight;
+            
+            if (value > 0) {
+                callScore += value;
+            } else {
+                putScore += Math.abs(value);
+            }
+        }
+        
+        // Apply momentum to weights
+        this.applyMomentum(patterns);
+        
+        // Normalize scores
+        const total = callScore + putScore;
+        if (total === 0) {
+            return {
+                direction: 'neutral',
+                confidence: 50,
+                callProbability: 50,
+                putProbability: 50
+            };
+        }
+        
+        const callProb = (callScore / total) * 100;
+        const putProb = (putScore / total) * 100;
+        
+        const direction = callProb > putProb ? 'call' : 'put';
+        const confidence = Math.max(callProb, putProb);
+        
+        return {
+            direction,
+            confidence: Math.round(confidence),
+            callProbability: Math.round(callProb),
+            putProbability: Math.round(putProb)
+        };
+    }
+    
+    applyMomentum(patterns) {
+        for (let pattern in patterns) {
+            if (this.neuralNetwork.weights[pattern] !== undefined) {
+                const previousChange = this.neuralNetwork.previousWeightChanges[pattern] || 0;
+                const currentChange = this.neuralNetwork.learningRate * patterns[pattern];
+                const momentumChange = this.neuralNetwork.momentum * previousChange;
+                
+                this.neuralNetwork.weights[pattern] += currentChange + momentumChange;
+                this.neuralNetwork.previousWeightChanges[pattern] = currentChange + momentumChange;
+            }
+        }
+    }
+    
+    // Enhanced risk management
+    checkRiskManagement(direction, amount) {
+        // Check daily loss limit
+        if (this.riskManager.dailyLoss >= this.riskManager.dailyLossLimit) {
+            this.logAIActivity('Daily loss limit reached. Trading suspended.');
+            return false;
+        }
+        
+        // Check consecutive losses
+        if (this.riskManager.consecutiveLosses >= this.riskManager.maxConsecutiveLosses) {
+            this.logAIActivity('Max consecutive losses reached. Reducing trade size.');
+            return false;
+        }
+        
+        // Check if profit target reached
+        if (this.riskManager.dailyProfit >= this.riskManager.profitTarget) {
+            this.logAIActivity('Daily profit target reached. Consider stopping.');
+            return true; // Still allow trading but log the achievement
+        }
+        
+        return true;
+    }
+    
+    calculateOptimalTradeSize(baseAmount, prediction) {
+        let optimalAmount = baseAmount;
+        
+        // Adjust based on confidence
+        const confidenceMultiplier = prediction.confidence / 100;
+        optimalAmount *= (0.5 + confidenceMultiplier * 0.5);
+        
+        // Apply martingale if enabled
+        if (document.getElementById('martingaleEnabled')?.checked && 
+            this.riskManager.consecutiveLosses > 0) {
+            const martingaleStep = Math.min(this.riskManager.consecutiveLosses, 
+                                          this.riskManager.maxMartingaleSteps);
+            optimalAmount *= Math.pow(this.riskManager.martingaleMultiplier, martingaleStep);
+        }
+        
+        // Apply anti-martingale if enabled
+        if (document.getElementById('antiMartingaleEnabled')?.checked && 
+            this.winStreak > 0) {
+            optimalAmount *= Math.pow(this.riskManager.antiMartingaleMultiplier, 
+                                    Math.min(this.winStreak, 3));
+        }
+        
+        // Ensure amount doesn't exceed balance percentage
+        const maxAmount = this.balance * 0.1; // Max 10% of balance per trade
+        optimalAmount = Math.min(optimalAmount, maxAmount);
+        
+        // Ensure minimum amount
+        optimalAmount = Math.max(optimalAmount, 0.35);
+        
+        return Math.round(optimalAmount * 100) / 100; // Round to 2 decimal places
+    }
+    
+    checkAutoTrade() {
+        const prediction = this.performEnsemblePrediction();
+        const minConfidence = parseInt(document.getElementById('minConfidence').value);
+        
+        if (prediction.confidence >= minConfidence) {
+            const baseAmount = parseFloat(document.getElementById('tradeAmount').value);
+            const duration = document.getElementById('tradeDuration').value;
+            
+            // Check risk management
+            if (!this.checkRiskManagement(prediction.direction, baseAmount)) {
+                return;
+            }
+            
+            // Calculate optimal trade size
+            const optimalAmount = this.calculateOptimalTradeSize(baseAmount, prediction);
+            
+            this.placeAITrade(prediction.direction, optimalAmount, duration, prediction);
+        }
+    }
+    
+    placeAITrade(direction, amount, duration, prediction) {
+        this.logAIActivity(`AI Signal: ${direction.toUpperCase()} (${prediction.confidence}% confidence)`);
+        this.logAIActivity(`Placing optimized trade: $${amount} for ${duration} ticks`);
+        this.placeTrade(direction, amount, duration, 'ai');
+    }
+    
+    // Enhanced UI updates
+    updateSentimentDisplay(bullish, bearish, neutral) {
+        document.getElementById('bullishSentiment').textContent = `${bullish.toFixed(1)}%`;
+        document.getElementById('bearishSentiment').textContent = `${bearish.toFixed(1)}%`;
+        document.getElementById('neutralSentiment').textContent = `${neutral.toFixed(1)}%`;
+    }
+    
+    updateAnalyticsDisplay(patterns) {
+        // Update pattern analysis
+        const trendDirection = patterns.ascending > patterns.descending ? 'Bullish' : 
+                              patterns.descending > patterns.ascending ? 'Bearish' : 'Neutral';
+        document.getElementById('trendDirection').textContent = trendDirection;
+        
+        const volatilityLevel = patterns.volatility_pattern > 0.7 ? 'High' :
+                               patterns.volatility_pattern > 0.3 ? 'Medium' : 'Low';
+        document.getElementById('volatilityLevel').textContent = volatilityLevel;
+        
+        // Update pattern strength
+        const avgPatternStrength = Object.values(patterns).reduce((a, b) => a + Math.abs(b), 0) / Object.keys(patterns).length;
+        const strengthPercentage = Math.min(avgPatternStrength * 100, 100);
+        document.getElementById('patternStrength').style.width = `${strengthPercentage}%`;
+        
+        // Update signal indicators
+        this.updateSignalIndicators(patterns);
+    }
+    
+    updateSignalIndicators(patterns) {
+        const trendIndicator = document.getElementById('trendIndicator');
+        const momentumIndicator = document.getElementById('momentumIndicator');
+        const volumeIndicator = document.getElementById('volumeIndicator');
+        
+        // Update trend indicator
+        if (patterns.trend_reversal > 0.5) {
+            trendIndicator.classList.add('active');
+        } else {
+            trendIndicator.classList.remove('active');
+        }
+        
+        // Update momentum indicator
+        if (Math.abs(patterns.momentum_pattern) > 0.3) {
+            momentumIndicator.classList.add('active');
+        } else {
+            momentumIndicator.classList.remove('active');
+        }
+        
+        // Update volume indicator
+        if (patterns.volume_pattern > 0.5) {
+            volumeIndicator.classList.add('active');
+        } else {
+            volumeIndicator.classList.remove('active');
+        }
+        
+        // Update signal strength meter
+        const overallStrength = (Math.abs(patterns.trend_reversal) + 
+                               Math.abs(patterns.momentum_pattern) + 
+                               patterns.volume_pattern) / 3 * 100;
+        
+        document.getElementById('signalStrengthValue').textContent = `${overallStrength.toFixed(0)}%`;
+        
+        // Update signal meter visual
+        const meterFill = document.getElementById('signalMeter');
+        if (meterFill) {
+            const rotation = (overallStrength / 100) * 180;
+            meterFill.style.transform = `rotate(${rotation}deg)`;
+        }
+    }
+    
+    startAdvancedAIAnalysis() {
+        setInterval(() => {
+            if (this.recentDigits.length >= 15) {
+                this.performAdvancedAnalysis();
+            }
+        }, 1000);
+    }
+    
+    // Enhanced connection and trading methods (keeping existing functionality)
+    connect() {
+>>>>>>> dc86583 (Revert "Fix Neural Network Initialization Error")
         const appId = document.getElementById('appId').value;
         const apiToken = document.getElementById('apiToken').value;
         const market = document.getElementById('marketSelect').value;
